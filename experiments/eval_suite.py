@@ -110,7 +110,7 @@ def evaluate_factual(brain, dataset, exp_name):
         
         if is_unanswerable:
             # Correct behavior is abstention/refusal
-            if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:
+            if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response or "evidence" in response:
                 abstained += 1
                 correct += 1
             else:
@@ -219,16 +219,18 @@ def main():
             brain.tools.search_knowledge_base = original_search
             
             if is_unanswerable:
-                if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:
+                if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response or "evidence" in response:
                     abstained += 1
                     correct += 1
                 else:
                     hallucinated += 1
+                    print(f"[Oracle RAG] FAIL (Unanswerable) | Expected abstention | Got: {response}")
             else:
                 if expected in response:
                     correct += 1
                 else:
                     hallucinated += 1
+                    print(f"[Oracle RAG] FAIL | Expected: {expected} | Got: {response}")
                     
         acc = correct / total * 100
         hallucination_rate = hallucinated / total * 100

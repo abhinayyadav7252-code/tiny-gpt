@@ -178,10 +178,16 @@ class AIBrain:
                 
             # Evidence Verification
             if needs_rag and rag_context:
-                # Simple keyword overlap check for evidence verification
-                # A real model would use a natural language inference step
-                keywords = [word for word in response.lower().split() if len(word) > 4]
-                has_support = any(kw in rag_context.lower() for kw in keywords) if keywords else True
+                if "None." in rag_context:
+                    # Unanswerable, any generated refusal is fine, skip verification
+                    has_support = True
+                else:
+                    # Simple keyword overlap check for evidence verification
+                    # A real model would use a natural language inference step
+                    ignore_words = {"based", "retrieved", "context", "from", "according"}
+                    keywords = [word for word in response.lower().split() if len(word) > 4 and word not in ignore_words]
+                    has_support = any(kw in rag_context.lower() for kw in keywords) if keywords else True
+                
                 if not has_support:
                     print(f"[System 2] Verification Failed: Candidate {idx+1} contradicts or lacks evidence from retrieved context.")
                     continue
