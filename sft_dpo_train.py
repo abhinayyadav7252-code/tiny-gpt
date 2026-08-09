@@ -9,7 +9,7 @@ def compute_sft_loss(model, prompt, target_response):
     Supervised Fine-Tuning Loss
     Trains the model to generate the target_response given the prompt.
     """
-    text = f"User: {prompt}\nAI: {target_response}"
+    text = f"User: {prompt}\nAI: {target_response}<|endoftext|>"
     idx = torch.tensor(encode(text), dtype=torch.long, device=config.device).unsqueeze(0)
     
     # We only want to compute loss on the AI response part
@@ -46,7 +46,7 @@ def compute_dpo_loss(policy_model, ref_model, prompt, chosen, rejected, beta=0.1
     return loss.mean()
 
 def get_response_logprob(model, prompt, response):
-    text = f"User: {prompt}\nAI: {response}"
+    text = f"User: {prompt}\nAI: {response}<|endoftext|>"
     idx = torch.tensor(encode(text), dtype=torch.long, device=config.device).unsqueeze(0)
     prompt_len = len(encode(f"User: {prompt}\nAI: "))
     
