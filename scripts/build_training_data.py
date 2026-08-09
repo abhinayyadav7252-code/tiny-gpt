@@ -19,6 +19,10 @@ def build_mixture():
         completion = f" Based on the retrieved context, {capital}."
         data.append({"prompt": prompt, "completion": completion})
         
+    inventions = [("telephone", "Alexander Graham Bell"), ("light bulb", "Thomas Edison"), ("airplane", "Wright Brothers"),
+                  ("printing press", "Johannes Gutenberg"), ("world wide web", "Tim Berners-Lee"), ("theory of relativity", "Albert Einstein"),
+                  ("penicillin", "Alexander Fleming"), ("radio", "Guglielmo Marconi"), ("battery", "Alessandro Volta")]
+                  
     for invention, inventor in inventions * 2:
         q = f"Who developed the {invention}?"
         query = q.split()[-1]
@@ -26,6 +30,9 @@ def build_mixture():
         completion = f" Based on the retrieved context, {inventor}."
         data.append({"prompt": prompt, "completion": completion})
         
+    elements = [("gold", "Au"), ("silver", "Ag"), ("iron", "Fe"), ("oxygen", "O"), ("carbon", "C"),
+                ("hydrogen", "H"), ("sodium", "Na"), ("potassium", "K"), ("calcium", "Ca"), ("helium", "He")]
+                
     for element, symbol in elements * 2:
         q = f"What is the chemical symbol for {element}?"
         query = q.split()[-1]
