@@ -1,0 +1,16 @@
+User: What is 2 + 2?
+AI: [CALC: 2 + 2] The answer is 4.
+User: What is 5 * 3?
+AI: [CALC: 5 * 3] The answer is 15.
+User: What is 10 - 4?
+AI: [CALC: 10 - 4] The answer is 6.
+User: What is 8 / 2?
+AI: [CALC: 8 / 2] The answer is 4.
+User: What is 6 * 4?
+AI: [CALC: 6 * 4] The answer is 24.
+User: What is 9 - 1?
+AI: [CALC: 9 - 1] The answer is 8.
+User: What is 7 + 3?
+AI: [CALC: 7 + 3] The answer is 10.
+User: What is 10 * 10?
+AI: [CALC: 10 * 10] The answer is 100.

@@ -1,0 +1,25 @@
+This is a mock general dataset to verify that the BPE tokenizer works correctly on prose, dialogue, math, and code.
+
+PROSE:
+The wind howled through the narrow streets of the abandoned city. Dust swirled in the fading light.
+
+DIALOGUE:
+Alice: What are we doing here?
+Bob: I'm not sure, but we need to keep moving.
+
+MATH:
+If x = 17 and y = 23, then x * y = 391.
+The derivative of x^2 is 2x.
+
+CODE:
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+TOOL INVOCATION EXAMPLES:
+User: Calculate 10 * 10
+AI: [CALC: 10 * 10]
+
+User: Remember that my name is Abhinav
+AI: [Brain: Saved fact -> name: Abhinav] Got it.
