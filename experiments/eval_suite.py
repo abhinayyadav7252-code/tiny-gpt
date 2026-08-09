@@ -123,88 +123,109 @@ def evaluate_factual(brain, dataset, exp_name):
     
     return acc, hallucination_rate, abstention_rate
 
-def evaluate_oracle_rag(dataset, exp_name):
-    print(f"\nEvaluating {exp_name} (Oracle RAG Factual)...")
-    total = len(dataset)
-    correct = 0
-    hallucinated = 0
-    abstained = 0
-    
-    # We will instantiate a new brain for each query to cleanly inject the exact context
-    from brain.rag_system import WIKI_DOCS
-    
-    for item in dataset:
-        query = item['query']
-        expected = item['answer'].lower()
-        is_unanswerable = item.get('unanswerable', False)
-        expected_keywords = item.get('expected_keywords', [])
-        
-        # Oracle Gold Document Injection
-        gold_doc = ""
-        if not is_unanswerable and expected_keywords:
-            for doc in WIKI_DOCS:
-                if any(kw.lower() in doc.lower() for kw in expected_keywords):
-                    gold_doc = doc
-                    break
-        
-        brain = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
-        # Mock retrieval inside process_query
-        original_system2 = brain.system2_reasoning
-        
-        def mocked_system2(prompt_str, user_query):
-            if gold_doc:
-                prompt_str = f"System: Retrieved Context: {gold_doc}\n" + prompt_str
-            return original_system2(prompt_str, user_query)
-            
-        brain.system2_reasoning = mocked_system2
-        
-        response = brain.process_query(query).lower()
-        
-        if is_unanswerable:
-            if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:
-                abstained += 1
-                correct += 1
-            else:
-                hallucinated += 1
-        else:
-            if expected in response:
-                correct += 1
-            else:
-                hallucinated += 1
-                
-    acc = correct / total * 100
-    hallucination_rate = hallucinated / total * 100
-    abstention_rate = abstained / sum(1 for item in dataset if item.get('unanswerable', False)) * 100 if any(item.get('unanswerable', False) for item in dataset) else 0.0
-    
-    return acc, hallucination_rate, abstention_rate
+# Removed top-level evaluate_oracle_rag
+
+import argparse
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--checkpoint", type=str, default=None, help="Path to trained weights (e.g. checkpoints/sft_full.pt)")
+    args = parser.parse_args()
+
     print("Loading datasets...")
     gsm8k_data = load_dataset('data/eval_gsm8k_subset.json')
     rag_data = load_dataset('data/eval_rag_subset.json')
     
-    print("\n--- PHASE 6.2: EVALUATION SUITE RUNNING ---")
+    print(f"\n--- PHASE 6.3: EVALUATION SUITE RUNNING ---")
+    if args.checkpoint:
+        print(f"Loading weights from {args.checkpoint}...")
+    else:
+        print("Using untrained base weights.")
     
     # 1. Isolated Retrieval Test
     retrieval_metrics = evaluate_retrieval_isolated(rag_data)
     
+    def get_brain():
+        import torch
+        import config
+        b = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
+        if args.checkpoint:
+            b.model.load_state_dict(torch.load(args.checkpoint, map_location=config.device))
+        return b
+
     # 2. Base Model (System 1)
-    brain_base = AIBrain(use_self_model=False, use_confidence=False, use_verification=False)
+    brain_base = get_brain()
+    brain_base.use_self_model = False
+    brain_base.use_confidence = False
+    brain_base.use_verification = False
     brain_base.process_query = lambda q: brain_base.system1_generation(f"User: {q}\nAI:", q)
     base_math_acc = evaluate_math(brain_base, gsm8k_data, "Base Model")
     base_fact_acc, base_halluc, _ = evaluate_factual(brain_base, rag_data, "Base Model")
     
     # 3. System 2 Only
-    brain_sys2 = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
+    brain_sys2 = get_brain()
     sys2_math_acc = evaluate_math(brain_sys2, gsm8k_data, "System 2 Only")
     sys2_fact_acc, sys2_halluc, _ = evaluate_factual(brain_sys2, rag_data, "System 2 Only")
     
     # 4. Full Brain (Sys 2 + RAG + Tools)
-    brain_full = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
+    brain_full = get_brain()
     full_fact_acc, full_halluc, full_abstention = evaluate_factual(brain_full, rag_data, "Full Brain")
     
     # 5. Oracle RAG
-    oracle_fact_acc, oracle_halluc, oracle_abstention = evaluate_oracle_rag(rag_data, "Oracle RAG")
+    # Reimplement evaluate_oracle_rag to use get_brain() internally
+    def evaluate_oracle_rag_with_checkpoint(dataset, exp_name):
+        print(f"\nEvaluating {exp_name} (Oracle RAG Factual)...")
+        total = len(dataset)
+        correct = 0
+        hallucinated = 0
+        abstained = 0
+        
+        from brain.rag_system import WIKI_DOCS
+        
+        for item in dataset:
+            query = item['query']
+            expected = item['answer'].lower()
+            is_unanswerable = item.get('unanswerable', False)
+            expected_keywords = item.get('expected_keywords', [])
+            
+            gold_doc = ""
+            if not is_unanswerable and expected_keywords:
+                for doc in WIKI_DOCS:
+                    if any(kw.lower() in doc.lower() for kw in expected_keywords):
+                        gold_doc = doc
+                        break
+            
+            brain = get_brain()
+            original_system2 = brain.system2_reasoning
+            
+            def mocked_system2(prompt_str, user_query):
+                if gold_doc:
+                    prompt_str = f"System: Retrieved Context: {gold_doc}\n" + prompt_str
+                return original_system2(prompt_str, user_query)
+                
+            brain.system2_reasoning = mocked_system2
+            
+            response = brain.process_query(query).lower()
+            
+            if is_unanswerable:
+                if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:
+                    abstained += 1
+                    correct += 1
+                else:
+                    hallucinated += 1
+            else:
+                if expected in response:
+                    correct += 1
+                else:
+                    hallucinated += 1
+                    
+        acc = correct / total * 100
+        hallucination_rate = hallucinated / total * 100
+        abstention_rate = abstained / sum(1 for item in dataset if item.get('unanswerable', False)) * 100 if any(item.get('unanswerable', False) for item in dataset) else 0.0
+        
+        return acc, hallucination_rate, abstention_rate
+
+    oracle_fact_acc, oracle_halluc, oracle_abstention = evaluate_oracle_rag_with_checkpoint(rag_data, "Oracle RAG")
     
     print("\n================ ABLATION SUMMARY ================")
     print(f"{'Experiment':<20} | {'Math Acc':<10} | {'Fact Acc':<10} | {'Halluc %':<10} | {'Abstention %':<12}")
