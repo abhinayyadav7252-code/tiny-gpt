@@ -205,7 +205,7 @@ def main():
                             gold_doc = doc
                             break
             
-            brain = get_brain()
+            ai_brain = get_brain()
             import brain.tools
             original_search = brain.tools.search_knowledge_base
             
@@ -213,7 +213,7 @@ def main():
                 # Patch the search function to return the gold_doc
                 brain.tools.search_knowledge_base = lambda q, mode='hybrid': f"Retrieved Context: {gold_doc}"
             
-            response = brain.process_query(query).lower()
+            response = ai_brain.process_query(query).lower()
             
             # Restore original
             brain.tools.search_knowledge_base = original_search
