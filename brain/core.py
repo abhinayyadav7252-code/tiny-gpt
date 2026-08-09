@@ -75,8 +75,19 @@ class AIBrain:
             mean_log_prob = 0
             
         generated_idx = generated_idx[0].tolist()
+        from dataset import eos_token_id
+        prompt_len = len(encode(prompt_str))
+        if eos_token_id in generated_idx[prompt_len:]:
+            # we must only look for eos in the newly generated tokens
+            try:
+                eos_idx = generated_idx.index(eos_token_id, prompt_len)
+                generated_idx = generated_idx[:eos_idx]
+            except ValueError:
+                pass
+        
         generated_text = decode(generated_idx)
         ai_response = generated_text[len(prompt_str):].split("\n")[0].strip()
+        ai_response = ai_response.replace("<|endoftext|>", "").strip()
         
         # Tools
         calc_match = re.search(r'\[CALC:\s*([^\]]+)\]', ai_response)
@@ -149,9 +160,21 @@ class AIBrain:
             mean_log_probs = [0] * num_candidates
             
         candidates = []
+        from dataset import eos_token_id
+        prompt_len = len(encode(prompt_str))
+        
         for i in range(num_candidates):
-            gen_text = decode(generated_idx[i].tolist())
+            gen_idx = generated_idx[i].tolist()
+            if eos_token_id in gen_idx[prompt_len:]:
+                try:
+                    eos_idx = gen_idx.index(eos_token_id, prompt_len)
+                    gen_idx = gen_idx[:eos_idx]
+                except ValueError:
+                    pass
+            
+            gen_text = decode(gen_idx)
             response = gen_text[len(prompt_str):].split("\n")[0].strip()
+            response = response.replace("<|endoftext|>", "").strip()
             candidates.append({'response': response, 'confidence': mean_log_probs[i]})
             
         print(f"[System 2] Generated {num_candidates} candidates.")

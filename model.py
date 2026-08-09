@@ -198,6 +198,9 @@ class TinyGPT(nn.Module):
 
     def generate(self, idx, max_new_tokens, use_cache=True):
         # Autoregressive generation
+        from dataset import eos_token_id
+        B = idx.shape[0]
+        unfinished = torch.ones(B, dtype=torch.bool, device=idx.device)
         past_key_values = None
         for _ in range(max_new_tokens):
             if use_cache and past_key_values is not None:
@@ -209,13 +212,23 @@ class TinyGPT(nn.Module):
             logits = logits[:, -1, :]
             probs = F.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, num_samples=1)
+            
+            idx_next = torch.where(unfinished.unsqueeze(1), idx_next, torch.tensor(eos_token_id, device=idx.device))
+            unfinished = unfinished & (idx_next.squeeze(1) != eos_token_id)
+            
             idx = torch.cat((idx, idx_next), dim=1)
+            
+            if not unfinished.any():
+                break
         return idx
 
     def generate_with_confidence(self, idx, max_new_tokens, use_cache=True):
         # Autoregressive generation that returns the mean log probability (confidence)
+        from dataset import eos_token_id
         B = idx.shape[0]
         log_probs = torch.zeros(B, device=idx.device)
+        lengths = torch.zeros(B, device=idx.device)
+        unfinished = torch.ones(B, dtype=torch.bool, device=idx.device)
         past_key_values = None
         for _ in range(max_new_tokens):
             if use_cache and past_key_values is not None:
@@ -230,15 +243,24 @@ class TinyGPT(nn.Module):
             # Sample the next token
             idx_next = torch.multinomial(probs, num_samples=1)
             
+            idx_next = torch.where(unfinished.unsqueeze(1), idx_next, torch.tensor(eos_token_id, device=idx.device))
+            
             # Calculate log probability of the sampled token
             sampled_prob = probs.gather(1, idx_next)
             log_prob = torch.log(sampled_prob + 1e-9).squeeze(-1)
-            log_probs += log_prob
+            log_probs += log_prob * unfinished.float()
+            lengths += unfinished.float()
+            
+            unfinished = unfinished & (idx_next.squeeze(1) != eos_token_id)
             
             idx = torch.cat((idx, idx_next), dim=1)
             
+            if not unfinished.any():
+                break
+            
         # Mean Log Probability of the generated sequence
-        mean_log_probs = (log_probs / max_new_tokens).tolist()
+        # Avoid division by zero by clamping lengths to at least 1
+        mean_log_probs = (log_probs / lengths.clamp(min=1)).tolist()
         return idx, mean_log_probs
 
 if __name__ == '__main__':
