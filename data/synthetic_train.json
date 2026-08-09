@@ -1,0 +1,22 @@
+[
+    {
+        "query": "Who is the CEO of OpenAI in 2024?",
+        "response": "Let me check the knowledge base.\n[RETRIEVE: CEO of OpenAI 2024]\nBased on the retrieved context, the CEO of OpenAI in 2024 is Sam Altman."
+    },
+    {
+        "query": "What is the capital of Australia?",
+        "response": "Let me check the knowledge base.\n[RETRIEVE: capital of Australia]\nThe capital of Australia is Canberra."
+    },
+    {
+        "query": "How many states are in the United States?",
+        "response": "There are 50 states in the United States."
+    },
+    {
+        "query": "Calculate 15 * 12 + 8.",
+        "response": "Let me calculate this.\n[CALC: 15 * 12 + 8]\nThe result of 15 * 12 + 8 is 188."
+    },
+    {
+        "query": "What is the speed of light?",
+        "response": "Let me check the knowledge base.\n[RETRIEVE: speed of light in vacuum]\nThe speed of light in a vacuum is approximately 299,792,458 meters per second."
+    }
+]

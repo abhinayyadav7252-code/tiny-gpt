@@ -54,7 +54,7 @@ class AIBrain:
         prompt_str = f"User: {user_query}\nAI:"
         
         # Decide if we need System 2 (Routing)
-        needs_system2 = any(kw in user_query.lower() for kw in ["calculate", "solve", "math", "+", "-", "*", "/", "logic", "think"])
+        needs_system2 = any(kw in user_query.lower() for kw in ["calculate", "solve", "math", "+", "-", "*", "/", "logic", "think", "who", "what", "where", "when", "why", "how", "capital", "invent"])
         
         if needs_system2:
             ai_response = self.system2_reasoning(prompt_str, user_query)
@@ -86,7 +86,16 @@ class AIBrain:
             ai_response = ai_response.replace(f"[CALC: {expression}]", f"[CALC: {expression} = {result}]")
             if "The answer is" not in ai_response:
                 ai_response += f" The answer is {result}."
-        elif not ai_response:
+                
+        # RAG Tool
+        from .tools import search_knowledge_base
+        ret_match = re.search(r'\[RETRIEVE:\s*([^\]]+)\]', ai_response)
+        if ret_match:
+            ret_query = ret_match.group(1).strip()
+            result = search_knowledge_base(ret_query)
+            ai_response = ai_response.replace(f"[RETRIEVE: {ret_query}]", f"\n{result}\n")
+            
+        if not ai_response:
              ai_response = "I couldn't process that properly."
              
         # Metacognitive Evaluation
@@ -115,6 +124,18 @@ class AIBrain:
     def system2_reasoning(self, prompt_str, user_query):
         print("[System 2] Activated. Generating multiple reasoning paths...")
         num_candidates = 3
+        
+        # Determine RAG Early
+        needs_rag = any(kw in user_query.lower() for kw in ["who", "what", "where", "when", "why", "how", "capital", "invent", "president"])
+        rag_context = ""
+        from .tools import search_knowledge_base
+        
+        if needs_rag:
+            print("[System 2] External knowledge deemed necessary. Retrieving...")
+            rag_context = search_knowledge_base(user_query)
+            print(f"[System 2] {rag_context}")
+            prompt_str = f"System: {rag_context}\n" + prompt_str
+            
         context = torch.tensor(encode(prompt_str), dtype=torch.long, device=config.device).unsqueeze(0)
         context = context.repeat(num_candidates, 1)
         
@@ -136,6 +157,7 @@ class AIBrain:
         for idx, cand in enumerate(candidates):
             response = cand['response']
             
+            # Math Tools
             calc_match = re.search(r'\[CALC:\s*([^\]]+)\]', response)
             if calc_match:
                 expression = calc_match.group(1).strip()
@@ -143,6 +165,23 @@ class AIBrain:
                 response = response.replace(f"[CALC: {expression}]", f"[CALC: {expression} = {result}]")
                 if "The answer is" not in response:
                     response += f" The answer is {result}."
+                    
+            # RAG Tools (Fallback if not caught early)
+            ret_match = re.search(r'\[RETRIEVE:\s*([^\]]+)\]', response)
+            if ret_match:
+                ret_query = ret_match.group(1).strip()
+                result = search_knowledge_base(ret_query)
+                response = response.replace(f"[RETRIEVE: {ret_query}]", f"\n{result}\n")
+                
+            # Evidence Verification
+            if needs_rag and rag_context:
+                # Simple keyword overlap check for evidence verification
+                # A real model would use a natural language inference step
+                keywords = [word for word in response.lower().split() if len(word) > 4]
+                has_support = any(kw in rag_context.lower() for kw in keywords) if keywords else True
+                if not has_support:
+                    print(f"[System 2] Verification Failed: Candidate {idx+1} contradicts or lacks evidence from retrieved context.")
+                    continue
                     
             if self.use_self_model:
                 confidence, error_detected, error_reason = self.metacognition.evaluate_output(

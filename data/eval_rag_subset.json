@@ -1,0 +1,22 @@
+[
+    {
+        "question": "Who was the first woman to win a Nobel Prize?",
+        "expected_answer": "Marie Curie"
+    },
+    {
+        "question": "In what year did the Apollo 11 moon landing occur?",
+        "expected_answer": "1969"
+    },
+    {
+        "question": "What is the chemical symbol for gold?",
+        "expected_answer": "Au"
+    },
+    {
+        "question": "Who wrote the play 'Romeo and Juliet'?",
+        "expected_answer": "William Shakespeare"
+    },
+    {
+        "question": "What is the largest planet in our solar system?",
+        "expected_answer": "Jupiter"
+    }
+]

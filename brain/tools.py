@@ -1,5 +1,6 @@
 import ast
 import operator
+from brain.rag_system import search_knowledge_base
 
 def safe_calc(expression):
     """

@@ -8,7 +8,7 @@ enc = tiktoken.get_encoding("gpt2")
 vocab_size = enc.n_vocab
 
 def encode(s):
-    return enc.encode(s, allowed_special={'<|endoftext|>'})
+    return enc.encode(s, allowed_special="all")
 
 def decode(l):
     return enc.decode(l)
