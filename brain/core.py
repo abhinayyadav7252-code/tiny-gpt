@@ -85,6 +85,11 @@ class AIBrain:
             except ValueError:
                 pass
         
+        # Simple Intent Router for Math Bypass
+        math_keywords = ["add", "subtract", "multiply", "divide", "how many", "how much", "mph", "train", "hour", "baker", "dozen", "earns", "students", "buy", "sell"]
+        if user_query and any(kw in user_query.lower() for kw in math_keywords) and any(c.isdigit() for c in user_query):
+            needs_rag = False
+            
         new_tokens = generated_idx[prompt_len:]
         ai_response = decode(new_tokens).strip()
         ai_response = ai_response.replace("<|endoftext|>", "").strip()
@@ -138,17 +143,30 @@ class AIBrain:
         
         # Determine RAG Early
         needs_rag = any(kw in user_query.lower() for kw in ["who", "what", "where", "when", "why", "how", "capital", "invent", "president"])
+        
+        # Simple Intent Router for Math Bypass
+        math_keywords = ["add", "subtract", "multiply", "divide", "how many", "how much", "mph", "train", "hour", "baker", "dozen", "earns", "students", "buy", "sell"]
+        is_math = user_query and any(kw in user_query.lower() for kw in math_keywords) and any(c.isdigit() for c in user_query)
+        if is_math:
+            needs_rag = True
+            
         rag_context = ""
         from .tools import search_knowledge_base
         
         if needs_rag:
-            print("[System 2] External knowledge deemed necessary. Retrieving...")
-            rag_context = search_knowledge_base(user_query)
-            print(f"[System 2] {rag_context}")
+            if is_math:
+                print("[System 2] Math detected. Bypassing external retrieval.")
+                rag_context = "Retrieved Context: None."
+            else:
+                print("[System 2] External knowledge deemed necessary. Retrieving...")
+                rag_context = search_knowledge_base(user_query)
+                print(f"[System 2] {rag_context}")
             
             # Use exact format seen during SFT: User -> AI Retrieve -> System Context -> AI Answer
             search_query = user_query.split()[-1] if user_query else "unknown"
             prompt_str = f"User: {user_query}\nAI: [RETRIEVE] {search_query} [/RETRIEVE]\nSystem: {rag_context}\nAI:"
+        else:
+            prompt_str = f"User: {user_query}\nAI:"
             
         print(f"[DEBUG] System 2 prompt_str:\n{repr(prompt_str)}\n")
         context = torch.tensor(encode(prompt_str), dtype=torch.long, device=config.device).unsqueeze(0)

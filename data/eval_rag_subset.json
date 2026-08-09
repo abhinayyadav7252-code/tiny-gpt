@@ -3,93 +3,108 @@
         "query": "Who was the first woman to win a Nobel Prize?",
         "answer": "Marie Curie",
         "expected_keywords": ["Marie Curie", "first woman", "Nobel Prize"],
-        "category": "science"
+        "category": "science",
+        "context": "Marie Curie was a Polish and naturalized-French physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize."
     },
     {
         "query": "In what year did the Apollo 11 moon landing occur?",
         "answer": "1969",
         "expected_keywords": ["Apollo 11", "1969", "moon landing"],
-        "category": "history"
+        "category": "history",
+        "context": "The Apollo 11 moon landing occurred in 1969. Neil Armstrong was the first man to walk on the moon, famously stating \"That's one small step for man, one giant leap for mankind.\""
     },
     {
         "query": "What is the chemical symbol for gold?",
         "answer": "Au",
         "expected_keywords": ["chemical symbol", "gold", "Au"],
-        "category": "science"
+        "category": "science",
+        "context": "The chemical symbol for gold is Au. Its atomic number is 79, making it one of the higher atomic number elements that occur naturally."
     },
     {
         "query": "What is the largest planet in our solar system?",
         "answer": "Jupiter",
         "expected_keywords": ["Jupiter", "largest planet", "gas giant"],
-        "category": "astronomy"
+        "category": "astronomy",
+        "context": "Jupiter is the largest planet in the Solar System. It is a gas giant with a mass more than two and a half times that of all the other planets in the Solar System combined."
     },
     {
         "query": "Who developed the theory of relativity?",
         "answer": "Albert Einstein",
         "expected_keywords": ["Albert Einstein", "theory of relativity"],
-        "category": "science"
+        "category": "science",
+        "context": "Albert Einstein developed the theory of relativity, one of the two pillars of modern physics. His mass-energy equivalence formula E = mc^2 is the world's most famous equation."
     },
     {
         "query": "What is the capital of Australia?",
         "answer": "Canberra",
         "expected_keywords": ["capital", "Australia", "Canberra"],
-        "category": "geography"
+        "category": "geography",
+        "context": "The capital of Australia is Canberra. It is Australia's largest inland city and the eighth-largest city overall."
     },
     {
         "query": "What is the elevation of Mount Everest?",
         "answer": "8,848.86 meters",
         "expected_keywords": ["Mount Everest", "elevation", "8,848.86", "Himalayas"],
-        "category": "geography"
+        "category": "geography",
+        "context": "Mount Everest is Earth's highest mountain above sea level, located in the Mahalangur Himal sub-range of the Himalayas. Its elevation is 8,848.86 meters."
     },
     {
         "query": "When was the Declaration of Independence adopted?",
         "answer": "July 4, 1776",
         "expected_keywords": ["Declaration of Independence", "July 4, 1776", "Philadelphia"],
-        "category": "history"
+        "category": "history",
+        "context": "The Declaration of Independence was adopted by the Second Continental Congress meeting in Philadelphia, Pennsylvania, on July 4, 1776."
     },
     {
         "query": "What is the speed of light in a vacuum in kilometers per second?",
         "answer": "300,000",
         "expected_keywords": ["speed of light", "vacuum", "300,000 kilometers"],
-        "category": "science"
+        "category": "science",
+        "context": "The speed of light in a vacuum is exactly 299,792,458 meters per second. This is approximately 300,000 kilometers per second or 186,000 miles per second."
     },
     {
         "query": "Which ocean is the largest and deepest on Earth?",
         "answer": "Pacific Ocean",
         "expected_keywords": ["largest", "deepest", "Pacific Ocean"],
-        "category": "geography"
+        "category": "geography",
+        "context": "The Pacific Ocean is the largest and deepest of Earth's five oceanic divisions. It extends from the Arctic Ocean in the north to the Southern Ocean in the south."
     },
     {
         "query": "Who was the first man to walk on the moon, and in what year did he do it?",
         "answer": "Neil Armstrong in 1969",
         "expected_keywords": ["Neil Armstrong", "1969", "Apollo 11"],
-        "category": "multi-hop"
+        "category": "multi-hop",
+        "context": "The Apollo 11 moon landing occurred in 1969. Neil Armstrong was the first man to walk on the moon, famously stating \"That's one small step for man, one giant leap for mankind.\""
     },
     {
         "query": "What planet is known as the Red Planet and which one is the largest?",
         "answer": "Mars is the Red Planet and Jupiter is the largest.",
         "expected_keywords": ["Mars", "Red Planet", "Jupiter", "largest planet"],
-        "category": "multi-hop"
+        "category": "multi-hop",
+        "context": "Mars is the fourth planet from the Sun and the second-smallest planet in the Solar System. It is often referred to as the \"Red Planet\" due to the effect of the iron oxide prevalent on its surface."
     },
     {
         "query": "Who discovered the fictional element Vibranium?",
         "answer": "I don't have enough evidence",
         "expected_keywords": [],
         "unanswerable": true,
-        "category": "unanswerable"
+        "category": "unanswerable",
+        "context": ""
     },
     {
         "query": "What is the population of the underwater city of Atlantis?",
         "answer": "I don't have enough evidence",
         "expected_keywords": [],
         "unanswerable": true,
-        "category": "unanswerable"
+        "category": "unanswerable",
+        "context": ""
     },
     {
         "query": "How many aliens currently live on the planet Mars?",
         "answer": "I don't have enough evidence",
         "expected_keywords": [],
         "unanswerable": true,
-        "category": "unanswerable"
+        "category": "unanswerable",
+        "context": ""
     }
 ]

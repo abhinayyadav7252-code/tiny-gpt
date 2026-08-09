@@ -137,7 +137,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, default=None, help="Path to trained weights (e.g. checkpoints/sft_full.pt)")
     parser.add_argument("--dataset", type=str, default="data/eval_rag_subset.json", help="Dataset to evaluate on")
-    parser.add_argument("--context-source", type=str, choices=["wiki", "gold"], default="wiki", help="Where to pull Oracle context from")
+    parser.add_argument("--context-source", type=str, choices=["wiki", "gold"], default="gold", help="Where to pull Oracle context from")
     args = parser.parse_args()
 
     print("Loading datasets...")
@@ -170,14 +170,10 @@ def main():
     base_math_acc = evaluate_math(brain_base, gsm8k_data, "Base Model")
     base_fact_acc, base_halluc, _ = evaluate_factual(brain_base, rag_data, "Base Model")
     
-    # 3. System 2 Only
-    brain_sys2 = get_brain()
-    sys2_math_acc = evaluate_math(brain_sys2, gsm8k_data, "System 2 Only")
-    sys2_fact_acc, sys2_halluc, _ = evaluate_factual(brain_sys2, rag_data, "System 2 Only")
-    
-    # 4. Full Brain (Sys 2 + RAG + Tools)
+    # 3. System 2 (RAG + Tools)
     brain_full = get_brain()
-    full_fact_acc, full_halluc, full_abstention = evaluate_factual(brain_full, rag_data, "Full Brain")
+    full_math_acc = evaluate_math(brain_full, gsm8k_data, "System 2")
+    full_fact_acc, full_halluc, full_abstention = evaluate_factual(brain_full, rag_data, "System 2")
     
     # 5. Oracle RAG
     # Reimplement evaluate_oracle_rag to use get_brain() internally
@@ -188,24 +184,12 @@ def main():
         hallucinated = 0
         abstained = 0
         
-        from brain.rag_system import WIKI_DOCS
-        
         for item in dataset:
             query = item['query']
             expected = item['answer'].lower()
             is_unanswerable = item.get('unanswerable', False)
-            expected_keywords = item.get('expected_keywords', [])
             
-            gold_doc = ""
-            if args.context_source == 'gold':
-                # Bypass WIKI_DOCS and use exact context from dataset
-                gold_doc = item.get('context', "")
-            else:
-                if not is_unanswerable and expected_keywords:
-                    for doc in WIKI_DOCS:
-                        if any(kw.lower() in doc.lower() for kw in expected_keywords):
-                            gold_doc = doc
-                            break
+            gold_doc = item.get('context', "")
             
             ai_brain = get_brain()
             import brain.tools
@@ -244,13 +228,12 @@ def main():
 
     oracle_fact_acc, oracle_halluc, oracle_abstention = evaluate_oracle_rag_with_checkpoint(rag_data, "Oracle RAG")
     
-    print("\n================ ABLATION SUMMARY ================")
-    print(f"{'Experiment':<20} | {'Math Acc':<10} | {'Fact Acc':<10} | {'Halluc %':<10} | {'Abstention %':<12}")
-    print("-" * 75)
-    print(f"{'Base Model':<20} | {base_math_acc:>8.1f}% | {base_fact_acc:>8.1f}% | {base_halluc:>8.1f}% | {'N/A':>12}")
-    print(f"{'System 2 Only':<20} | {sys2_math_acc:>8.1f}% | {sys2_fact_acc:>8.1f}% | {sys2_halluc:>8.1f}% | {'N/A':>12}")
-    print(f"{'Full Brain (RAG)':<20} | {'N/A':>10} | {full_fact_acc:>8.1f}% | {full_halluc:>8.1f}% | {full_abstention:>11.1f}%")
-    print(f"{'Oracle RAG':<20} | {'N/A':>10} | {oracle_fact_acc:>8.1f}% | {oracle_halluc:>8.1f}% | {oracle_abstention:>11.1f}%")
+    print("\n================ BENCHMARK SUMMARY ================")
+    print(f"{'Experiment':<20} | {'Math Acc':<10} | {'Fact RAG Acc':<14} | {'Unanswerable Acc':<16} | {'Hallucination %':<15}")
+    print("-" * 85)
+    print(f"{'Base Model':<20} | {base_math_acc:>8.1f}% | {base_fact_acc:>12.1f}% | {'N/A':>16} | {base_halluc:>14.1f}%")
+    print(f"{'System 2 (RAG)':<20} | {full_math_acc:>8.1f}% | {full_fact_acc:>12.1f}% | {full_abstention:>15.1f}% | {full_halluc:>14.1f}%")
+    print(f"{'Oracle RAG':<20} | {'N/A':>10} | {oracle_fact_acc:>12.1f}% | {oracle_abstention:>15.1f}% | {oracle_halluc:>14.1f}%")
     
     print("\n================ RAG RETRIEVAL (ISOLATED) ================")
     for k, v in retrieval_metrics.items():
