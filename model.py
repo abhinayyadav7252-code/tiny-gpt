@@ -196,7 +196,7 @@ class TinyGPT(nn.Module):
 
         return logits, loss, presents
 
-    def generate(self, idx, max_new_tokens, use_cache=True):
+    def generate(self, idx, max_new_tokens, use_cache=False):
         # Autoregressive generation
         from dataset import eos_token_id
         B = idx.shape[0]
@@ -222,7 +222,7 @@ class TinyGPT(nn.Module):
                 break
         return idx
 
-    def generate_with_confidence(self, idx, max_new_tokens, use_cache=True):
+    def generate_with_confidence(self, idx, max_new_tokens, use_cache=False):
         # Autoregressive generation that returns the mean log probability (confidence)
         from dataset import eos_token_id
         B = idx.shape[0]

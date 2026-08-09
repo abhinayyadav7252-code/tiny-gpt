@@ -85,8 +85,8 @@ class AIBrain:
             except ValueError:
                 pass
         
-        generated_text = decode(generated_idx)
-        ai_response = generated_text[len(prompt_str):].split("\n")[0].strip()
+        new_tokens = generated_idx[prompt_len:]
+        ai_response = decode(new_tokens).strip()
         ai_response = ai_response.replace("<|endoftext|>", "").strip()
         
         # Tools
@@ -150,6 +150,7 @@ class AIBrain:
             search_query = user_query.split()[-1] if user_query else "unknown"
             prompt_str = f"User: {user_query}\nAI: [RETRIEVE] {search_query} [/RETRIEVE]\nSystem: {rag_context}\nAI:"
             
+        print(f"[DEBUG] System 2 prompt_str:\n{repr(prompt_str)}\n")
         context = torch.tensor(encode(prompt_str), dtype=torch.long, device=config.device).unsqueeze(0)
         context = context.repeat(num_candidates, 1)
         
@@ -172,8 +173,9 @@ class AIBrain:
                 except ValueError:
                     pass
             
-            gen_text = decode(gen_idx)
-            response = gen_text[len(prompt_str):].split("\n")[0].strip()
+            # Decode ONLY the newly generated tokens
+            new_tokens = gen_idx[prompt_len:]
+            response = decode(new_tokens).strip()
             response = response.replace("<|endoftext|>", "").strip()
             candidates.append({'response': response, 'confidence': mean_log_probs[i]})
             
