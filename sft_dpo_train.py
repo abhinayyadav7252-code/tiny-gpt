@@ -128,12 +128,10 @@ def run_sft_training(dataset_path, epochs=1, save_path="checkpoints/sft_model.pt
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["overfit", "full", "dpo"], default="overfit")
+    parser.add_argument("--mode", choices=["overfit", "full"], default="overfit")
     args = parser.parse_args()
     
     if args.mode == "overfit":
         run_sft_training("data/sft_overfit_data.jsonl", epochs=30, save_path="checkpoints/sft_overfit.pt", lr=5e-4)
     elif args.mode == "full":
         run_sft_training("data/mixed_training_data.jsonl", epochs=5, save_path="checkpoints/sft_full.pt", lr=1e-4)
-    elif args.mode == "dpo":
-        run_alignment_training()
