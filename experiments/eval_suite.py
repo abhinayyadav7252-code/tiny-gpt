@@ -206,17 +206,17 @@ def main():
                             break
             
             brain = get_brain()
-            original_system2 = brain.system2_reasoning
+            import brain.tools
+            original_search = brain.tools.search_knowledge_base
             
-            def mocked_system2(prompt_str, user_query):
-                if gold_doc:
-                    search_query = user_query.split()[-1] if user_query else "unknown"
-                    prompt_str = f"User: {user_query}\nAI: [RETRIEVE] {search_query} [/RETRIEVE]\nSystem: Retrieved Context: {gold_doc}\nAI:"
-                return original_system2(prompt_str, user_query)
-                
-            brain.system2_reasoning = mocked_system2
+            if gold_doc:
+                # Patch the search function to return the gold_doc
+                brain.tools.search_knowledge_base = lambda q, mode='hybrid': f"Retrieved Context: {gold_doc}"
             
             response = brain.process_query(query).lower()
+            
+            # Restore original
+            brain.tools.search_knowledge_base = original_search
             
             if is_unanswerable:
                 if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:

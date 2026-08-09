@@ -137,7 +137,7 @@ class AIBrain:
             
             # Use exact format seen during SFT: User -> AI Retrieve -> System Context -> AI Answer
             search_query = user_query.split()[-1] if user_query else "unknown"
-            prompt_str = f"User: {user_query}\nAI: [RETRIEVE] {search_query} [/RETRIEVE]\nSystem: Retrieved Context: {rag_context}\nAI:"
+            prompt_str = f"User: {user_query}\nAI: [RETRIEVE] {search_query} [/RETRIEVE]\nSystem: {rag_context}\nAI:"
             
         context = torch.tensor(encode(prompt_str), dtype=torch.long, device=config.device).unsqueeze(0)
         context = context.repeat(num_candidates, 1)
