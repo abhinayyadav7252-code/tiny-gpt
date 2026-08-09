@@ -9,11 +9,13 @@ def compute_sft_loss(model, prompt, target_response):
     Supervised Fine-Tuning Loss
     Trains the model to generate the target_response given the prompt.
     """
-    text = f"User: {prompt}\nAI: {target_response}<|endoftext|>"
+    # Note: target_response from dataset usually has a leading space (e.g., " Based on...")
+    # So we don't add a space after 'AI:' to avoid double spaces that corrupt tokenization
+    text = f"User: {prompt}\nAI:{target_response}<|endoftext|>"
     idx = torch.tensor(encode(text), dtype=torch.long, device=config.device).unsqueeze(0)
     
     # We only want to compute loss on the AI response part
-    prompt_len = len(encode(f"User: {prompt}\nAI: "))
+    prompt_len = len(encode(f"User: {prompt}\nAI:"))
     
     # targets is the same as idx but shifted by 1
     inputs = idx[:, :-1]
@@ -46,9 +48,9 @@ def compute_dpo_loss(policy_model, ref_model, prompt, chosen, rejected, beta=0.1
     return loss.mean()
 
 def get_response_logprob(model, prompt, response):
-    text = f"User: {prompt}\nAI: {response}<|endoftext|>"
+    text = f"User: {prompt}\nAI:{response}<|endoftext|>"
     idx = torch.tensor(encode(text), dtype=torch.long, device=config.device).unsqueeze(0)
-    prompt_len = len(encode(f"User: {prompt}\nAI: "))
+    prompt_len = len(encode(f"User: {prompt}\nAI:"))
     
     inputs = idx[:, :-1]
     targets = idx[:, 1:]
