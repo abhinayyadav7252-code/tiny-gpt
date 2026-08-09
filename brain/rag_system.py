@@ -143,19 +143,21 @@ class HybridRetriever(KnowledgeBase):
                 
         return combined[:top_k]
 
-# Initialize a global knowledge base (Dummy Wiki for now)
-WIKI_DOCS = [
-    "Marie Curie was the first woman to win a Nobel Prize.",
-    "The Apollo 11 moon landing occurred in 1969. Neil Armstrong was the first man to walk on the moon.",
-    "The chemical symbol for gold is Au.",
-    "William Shakespeare wrote the famous play 'Romeo and Juliet'.",
-    "Jupiter is the largest planet in our solar system.",
-    "The capital of Australia is Canberra.",
-    "The speed of light in a vacuum is approximately 299,792,458 meters per second.",
-    "Water boils at 100 degrees Celsius at sea level.",
-    "The Great Wall of China is the longest wall in the world.",
-    "Albert Einstein developed the theory of relativity."
-]
+def load_corpus(knowledge_dir='knowledge'):
+    docs = []
+    if not os.path.exists(knowledge_dir):
+        return ["Dummy knowledge base if directory not found."]
+    for filename in os.listdir(knowledge_dir):
+        if filename.endswith(".txt"):
+            filepath = os.path.join(knowledge_dir, filename)
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Split by newlines into chunks
+                chunks = [c.strip() for c in content.split('\n') if len(c.strip()) > 10]
+                docs.extend(chunks)
+    return docs if docs else ["Dummy knowledge base."]
+
+WIKI_DOCS = load_corpus()
 
 def get_retriever(mode='hybrid'):
     if mode == 'tfidf':

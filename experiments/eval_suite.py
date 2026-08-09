@@ -2,94 +2,161 @@ import json
 import time
 import os
 import sys
+import re
 
-# Add root directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from brain.core import AIBrain
+from brain.rag_system import get_retriever
 
 def load_dataset(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
-def run_evaluation(brain, dataset, exp_name):
-    print(f"\n{'='*50}\nRunning {exp_name}\n{'='*50}")
+def extract_math_answer(text):
+    """Adversarially hard math extraction to prevent substring false positives."""
+    if text is None:
+        return None
     
+    # Try to find "The answer is X"
+    match = re.search(r'(?i)the answer is\s*([-+]?\d*\.?\d+)', text)
+    if match:
+        return match.group(1).strip()
+        
+    # Fallback to the last number in the text
+    numbers = re.findall(r'[-+]?\d*\.?\d+', text)
+    if numbers:
+        return numbers[-1]
+    
+    return None
+
+def evaluate_math(brain, dataset, exp_name):
+    print(f"\nEvaluating {exp_name} (Math)...")
     total = len(dataset)
     correct = 0
-    total_latency = 0
     
-    # We will measure confidence calibration
-    # If correct, what was confidence?
-    # If incorrect, what was confidence?
-    conf_correct = []
-    conf_incorrect = []
-
     for item in dataset:
         query = item.get('question') or item.get('query')
         expected = item.get('expected_answer') or item.get('answer')
         
-        start_time = time.time()
-        
-        # Override printing to avoid spam
-        # In a real eval suite we might silence stdout
-        response = brain.process_query(query)
-        
-        latency = time.time() - start_time
-        total_latency += latency
-        
-        # Simple exact match/substring match
-        # Extract the expected final answer for GSM8K (after ####)
         if "####" in expected:
             expected = expected.split("####")[1].strip()
             
-        is_correct = expected.lower() in response.lower()
+        response = brain.process_query(query)
+        extracted = extract_math_answer(response)
         
+        # Exact string float matching to avoid '16' in '160'
+        is_correct = False
+        if extracted is not None:
+            try:
+                if float(extracted) == float(expected):
+                    is_correct = True
+            except ValueError:
+                pass
+                
         if is_correct:
             correct += 1
             
-        print(f"Q: {query}")
-        print(f"A: {response}")
-        print(f"Expected: {expected} | Correct: {is_correct}\n")
-        
-    accuracy = correct / total * 100
-    avg_latency = total_latency / total
+    acc = correct / total * 100
+    return acc
+
+def evaluate_retrieval_isolated(dataset, top_k_list=[1, 3, 5]):
+    print("\nEvaluating RAG Retrieval (Isolated)...")
+    retriever = get_retriever('hybrid')
     
-    print(f"--- Results for {exp_name} ---")
-    print(f"Accuracy: {accuracy:.1f}% ({correct}/{total})")
-    print(f"Avg Latency: {avg_latency:.2f}s")
-    return accuracy
+    results = {k: 0 for k in top_k_list}
+    total = len(dataset)
+    
+    for item in dataset:
+        query = item['query']
+        expected_context_keywords = item.get('expected_keywords', [])
+        if not expected_context_keywords:
+            # Fallback to checking if answer is in retrieved doc
+            expected_context_keywords = [item['answer']]
+            
+        retrieved_docs = retriever.search(query, top_k=max(top_k_list))
+        retrieved_texts = [d[0].lower() for d in retrieved_docs]
+        
+        for k in top_k_list:
+            top_k_texts = retrieved_texts[:k]
+            # Check if any expected keyword is in any of the top_k docs
+            found = False
+            for text in top_k_texts:
+                if any(kw.lower() in text for kw in expected_context_keywords):
+                    found = True
+                    break
+            if found:
+                results[k] += 1
+                
+    recalls = {f"Recall@{k}": (results[k] / total) * 100 for k in top_k_list}
+    return recalls
+
+def evaluate_factual(brain, dataset, exp_name):
+    print(f"\nEvaluating {exp_name} (Factual)...")
+    total = len(dataset)
+    correct = 0
+    hallucinated = 0
+    abstained = 0
+    
+    for item in dataset:
+        query = item['query']
+        expected = item['answer'].lower()
+        is_unanswerable = item.get('unanswerable', False)
+        
+        response = brain.process_query(query).lower()
+        
+        if is_unanswerable:
+            # Correct behavior is abstention/refusal
+            if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:
+                abstained += 1
+                correct += 1
+            else:
+                hallucinated += 1
+        else:
+            if expected in response:
+                correct += 1
+            else:
+                hallucinated += 1
+                
+    acc = correct / total * 100
+    hallucination_rate = hallucinated / total * 100
+    abstention_rate = abstained / sum(1 for item in dataset if item.get('unanswerable', False)) * 100 if any(item.get('unanswerable', False) for item in dataset) else 0.0
+    
+    return acc, hallucination_rate, abstention_rate
 
 def main():
     print("Loading datasets...")
     gsm8k_data = load_dataset('data/eval_gsm8k_subset.json')
     rag_data = load_dataset('data/eval_rag_subset.json')
     
-    results = {}
+    print("\n--- PHASE 6.1: EVALUATION SUITE RUNNING ---")
     
-    # Base Model (System 1, no verification)
+    # 1. Isolated Retrieval Test
+    retrieval_metrics = evaluate_retrieval_isolated(rag_data)
+    
+    # 2. Base Model (System 1)
     brain_base = AIBrain(use_self_model=False, use_confidence=False, use_verification=False)
-    # Monkeypatch to disable System 2
     brain_base.process_query = lambda q: brain_base.system1_generation(f"User: {q}\nAI:", q)
-    results['Exp A: Base (Math)'] = run_evaluation(brain_base, gsm8k_data, "Exp A: Base Model (Math)")
+    base_math_acc = evaluate_math(brain_base, gsm8k_data, "Base Model")
+    base_fact_acc, base_halluc, _ = evaluate_factual(brain_base, rag_data, "Base Model")
     
-    # System 2 Only
+    # 3. System 2 Only
     brain_sys2 = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
-    # Disable RAG (Tools already used inside System 2)
-    # We will test Sys2 on Math
-    results['Exp B: Sys2 Only (Math)'] = run_evaluation(brain_sys2, gsm8k_data, "Exp B: System 2 Only (Math)")
+    sys2_math_acc = evaluate_math(brain_sys2, gsm8k_data, "System 2 Only")
+    sys2_fact_acc, sys2_halluc, _ = evaluate_factual(brain_sys2, rag_data, "System 2 Only")
     
-    # RAG Only (System 1 + RAG)
-    brain_rag = AIBrain(use_self_model=False, use_confidence=False, use_verification=False)
-    # We test on RAG dataset, Sys 1 handles it via `[RETRIEVE]` regex
-    results['Exp C: RAG Only (Factual)'] = run_evaluation(brain_rag, rag_data, "Exp C: RAG Only (Factual)")
-    
-    # Full Brain
+    # 4. Full Brain (Sys 2 + RAG + Tools)
     brain_full = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
-    results['Exp E: Full Brain (Factual)'] = run_evaluation(brain_full, rag_data, "Exp E: Full Brain (Factual)")
+    full_fact_acc, full_halluc, full_abstention = evaluate_factual(brain_full, rag_data, "Full Brain")
     
-    print("\n================ SUMMARY ================")
-    for k, v in results.items():
+    print("\n================ ABLATION SUMMARY ================")
+    print(f"{'Experiment':<20} | {'Math Acc':<10} | {'Fact Acc':<10} | {'Halluc %':<10} | {'Abstention %':<12}")
+    print("-" * 75)
+    print(f"{'Base Model':<20} | {base_math_acc:>8.1f}% | {base_fact_acc:>8.1f}% | {base_halluc:>8.1f}% | {'N/A':>12}")
+    print(f"{'System 2 Only':<20} | {sys2_math_acc:>8.1f}% | {sys2_fact_acc:>8.1f}% | {sys2_halluc:>8.1f}% | {'N/A':>12}")
+    print(f"{'Full Brain (RAG)':<20} | {'N/A':>10} | {full_fact_acc:>8.1f}% | {full_halluc:>8.1f}% | {full_abstention:>11.1f}%")
+    
+    print("\n================ RAG RETRIEVAL (ISOLATED) ================")
+    for k, v in retrieval_metrics.items():
         print(f"{k}: {v:.1f}%")
 
 if __name__ == "__main__":

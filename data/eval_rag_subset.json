@@ -1,22 +1,39 @@
 [
     {
-        "question": "Who was the first woman to win a Nobel Prize?",
-        "expected_answer": "Marie Curie"
+        "query": "Who was the first woman to win a Nobel Prize?",
+        "answer": "Marie Curie",
+        "expected_keywords": ["Marie Curie", "first woman", "Nobel Prize"]
     },
     {
-        "question": "In what year did the Apollo 11 moon landing occur?",
-        "expected_answer": "1969"
+        "query": "In what year did the Apollo 11 moon landing occur?",
+        "answer": "1969",
+        "expected_keywords": ["Apollo 11", "1969", "moon landing"]
     },
     {
-        "question": "What is the chemical symbol for gold?",
-        "expected_answer": "Au"
+        "query": "What is the chemical symbol for gold?",
+        "answer": "Au",
+        "expected_keywords": ["chemical symbol", "gold", "Au"]
     },
     {
-        "question": "Who wrote the play 'Romeo and Juliet'?",
-        "expected_answer": "William Shakespeare"
+        "query": "What is the largest planet in our solar system?",
+        "answer": "Jupiter",
+        "expected_keywords": ["Jupiter", "largest planet", "gas giant"]
     },
     {
-        "question": "What is the largest planet in our solar system?",
-        "expected_answer": "Jupiter"
+        "query": "Who developed the theory of relativity?",
+        "answer": "Albert Einstein",
+        "expected_keywords": ["Albert Einstein", "theory of relativity"]
+    },
+    {
+        "query": "Who discovered the fictional element Vibranium?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true
+    },
+    {
+        "query": "What is the population of the underwater city of Atlantis?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true
     }
 ]
