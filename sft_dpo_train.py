@@ -65,62 +65,75 @@ def get_response_logprob(model, prompt, response):
     response_log_probs = gathered_log_probs[:, prompt_len-1:]
     return response_log_probs.sum(dim=1)
 
-def run_alignment_training():
+import json
+import os
+import argparse
+
+def load_jsonl(path):
+    data = []
+    with open(path, 'r') as f:
+        for line in f:
+            data.append(json.loads(line))
+    return data
+
+def run_sft_training(dataset_path, epochs=1, save_path="checkpoints/sft_model.pt", lr=1e-4):
     print("==================================================")
-    print("=== Phase 5.5: Alignment Training (SFT + DPO)  ===")
+    print(f"=== Phase 6.3: SFT Training ({dataset_path}) ===")
     print("==================================================\n")
     
-    policy_model = TinyGPT().to(config.device)
-    ref_model = TinyGPT().to(config.device)
+    if not os.path.exists('checkpoints'):
+        os.makedirs('checkpoints')
+        
+    model = TinyGPT().to(config.device)
+    # We start from scratch (untrained) to prove the pipeline works, 
+    # but in a real scenario we'd load the pre-trained weights.
     
-    # In a real scenario, you would load the pre-trained checkpoint here
-    # policy_model.load_state_dict(torch.load('checkpoints/pretrained.pt'))
-    # ref_model.load_state_dict(torch.load('checkpoints/pretrained.pt'))
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    dataset = load_jsonl(dataset_path)
     
-    ref_model.eval() # Reference model is always frozen
-    optimizer = torch.optim.AdamW(policy_model.parameters(), lr=1e-5)
-    
-    # Example Alignment Dataset
-    dataset = [
-        {
-            "prompt": "What is 2+2?",
-            "chosen": "The answer is 4.",
-            "rejected": "I think it is 5."
-        },
-        {
-            "prompt": "Explain gravity.",
-            "chosen": "Gravity is the force that attracts a body toward the center of the earth.",
-            "rejected": "Gravity is magic."
-        }
-    ]
-    
-    epochs = 1
-    print(f"Training for {epochs} epochs on device: {config.device}")
+    print(f"Training on {len(dataset)} examples for {epochs} epochs on device: {config.device}")
     
     for epoch in range(epochs):
         total_sft_loss = 0
-        total_dpo_loss = 0
         
         for item in dataset:
             optimizer.zero_grad(set_to_none=True)
             
-            # Step 1: Supervised Fine-Tuning (SFT) on the chosen response
-            sft_loss = compute_sft_loss(policy_model, item["prompt"], item["chosen"])
+            # The JSONL might have "prompt" and "completion", or just "text"
+            if "prompt" in item and "completion" in item:
+                # Remove "User: " and "AI: " if they are already in the dataset prompt to avoid double-adding
+                prompt = item["prompt"]
+                if prompt.startswith("User: "): prompt = prompt[6:]
+                if prompt.endswith("\nAI:"): prompt = prompt[:-4]
+                if prompt.endswith("\nAI: "): prompt = prompt[:-5]
+                
+                loss = compute_sft_loss(model, prompt, item["completion"])
+            else:
+                # For pure text completion (pretrain), no masking
+                idx = torch.tensor(encode(item["text"]), dtype=torch.long, device=config.device).unsqueeze(0)
+                inputs = idx[:, :-1]
+                targets = idx[:, 1:].clone()
+                _, loss, _ = model(inputs, targets=targets)
             
-            # Step 2: DPO on chosen vs rejected
-            dpo_loss = compute_dpo_loss(policy_model, ref_model, item["prompt"], item["chosen"], item["rejected"])
-            
-            # Combined Loss
-            loss = sft_loss + dpo_loss
             loss.backward()
             optimizer.step()
+            total_sft_loss += loss.item()
             
-            total_sft_loss += sft_loss.item()
-            total_dpo_loss += dpo_loss.item()
+        avg_loss = total_sft_loss / len(dataset)
+        if (epoch + 1) % 5 == 0 or epoch == 0 or epoch == epochs - 1:
+            print(f"Epoch {epoch+1:03d}/{epochs} | SFT Loss: {avg_loss:.4f}", flush=True)
             
-        print(f"Epoch {epoch+1:02d}/{epochs} | SFT Loss: {total_sft_loss/len(dataset):.4f} | DPO Loss: {total_dpo_loss/len(dataset):.4f}", flush=True)
-        
-    print("\n[OK] Alignment Pipeline verified.")
+    torch.save(model.state_dict(), save_path)
+    print(f"\n[OK] Model saved to {save_path}")
 
 if __name__ == "__main__":
-    run_alignment_training()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=["overfit", "full", "dpo"], default="overfit")
+    args = parser.parse_args()
+    
+    if args.mode == "overfit":
+        run_sft_training("data/sft_overfit_data.jsonl", epochs=30, save_path="checkpoints/sft_overfit.pt", lr=5e-4)
+    elif args.mode == "full":
+        run_sft_training("data/mixed_training_data.jsonl", epochs=5, save_path="checkpoints/sft_full.pt", lr=1e-4)
+    elif args.mode == "dpo":
+        run_alignment_training()
