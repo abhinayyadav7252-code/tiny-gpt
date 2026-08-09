@@ -209,9 +209,11 @@ def main():
             import brain.tools
             original_search = brain.tools.search_knowledge_base
             
-            if gold_doc:
+            if gold_doc != "":
                 # Patch the search function to return the gold_doc
                 brain.tools.search_knowledge_base = lambda q, mode='hybrid': f"Retrieved Context: {gold_doc}"
+            else:
+                brain.tools.search_knowledge_base = lambda q, mode='hybrid': "Retrieved Context: None."
             
             response = ai_brain.process_query(query).lower()
             

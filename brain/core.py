@@ -207,10 +207,10 @@ class AIBrain:
                     # Unanswerable, any generated refusal is fine, skip verification
                     has_support = True
                 else:
-                    # Simple keyword overlap check for evidence verification
-                    # A real model would use a natural language inference step
-                    ignore_words = {"based", "retrieved", "context", "from", "according"}
-                    keywords = [word for word in response.lower().split() if len(word) > 4 and word not in ignore_words]
+                    import string
+                    ignore_words = {"based", "retrieved", "context", "from", "according", "think", "step", "have", "enough", "evidence"}
+                    clean_response = response.lower().translate(str.maketrans('', '', string.punctuation))
+                    keywords = [w for w in clean_response.split() if w not in ignore_words and len(w) > 2]
                     has_support = any(kw in rag_context.lower() for kw in keywords) if keywords else True
                 
                 if not has_support:
