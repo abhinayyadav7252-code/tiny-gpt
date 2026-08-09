@@ -64,13 +64,18 @@ def evaluate_retrieval_isolated(dataset, top_k_list=[1, 3, 5]):
     retriever = get_retriever('hybrid')
     
     results = {k: 0 for k in top_k_list}
-    total = len(dataset)
+    answerable_total = sum(1 for item in dataset if not item.get('unanswerable', False))
     
+    if answerable_total == 0:
+        return {f"Recall@{k}": 0.0 for k in top_k_list}
+        
     for item in dataset:
+        if item.get('unanswerable', False):
+            continue
+            
         query = item['query']
         expected_context_keywords = item.get('expected_keywords', [])
         if not expected_context_keywords:
-            # Fallback to checking if answer is in retrieved doc
             expected_context_keywords = [item['answer']]
             
         retrieved_docs = retriever.search(query, top_k=max(top_k_list))
@@ -78,7 +83,6 @@ def evaluate_retrieval_isolated(dataset, top_k_list=[1, 3, 5]):
         
         for k in top_k_list:
             top_k_texts = retrieved_texts[:k]
-            # Check if any expected keyword is in any of the top_k docs
             found = False
             for text in top_k_texts:
                 if any(kw.lower() in text for kw in expected_context_keywords):
@@ -87,7 +91,7 @@ def evaluate_retrieval_isolated(dataset, top_k_list=[1, 3, 5]):
             if found:
                 results[k] += 1
                 
-    recalls = {f"Recall@{k}": (results[k] / total) * 100 for k in top_k_list}
+    recalls = {f"Recall@{k}": (results[k] / answerable_total) * 100 for k in top_k_list}
     return recalls
 
 def evaluate_factual(brain, dataset, exp_name):
@@ -131,6 +135,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, default=None, help="Path to trained weights (e.g. checkpoints/sft_full.pt)")
     parser.add_argument("--dataset", type=str, default="data/eval_rag_subset.json", help="Dataset to evaluate on")
+    parser.add_argument("--context-source", type=str, choices=["wiki", "gold"], default="wiki", help="Where to pull Oracle context from")
     args = parser.parse_args()
 
     print("Loading datasets...")
@@ -190,11 +195,15 @@ def main():
             expected_keywords = item.get('expected_keywords', [])
             
             gold_doc = ""
-            if not is_unanswerable and expected_keywords:
-                for doc in WIKI_DOCS:
-                    if any(kw.lower() in doc.lower() for kw in expected_keywords):
-                        gold_doc = doc
-                        break
+            if args.context_source == 'gold':
+                # Bypass WIKI_DOCS and use exact context from dataset
+                gold_doc = item.get('context', "")
+            else:
+                if not is_unanswerable and expected_keywords:
+                    for doc in WIKI_DOCS:
+                        if any(kw.lower() in doc.lower() for kw in expected_keywords):
+                            gold_doc = doc
+                            break
             
             brain = get_brain()
             original_system2 = brain.system2_reasoning
