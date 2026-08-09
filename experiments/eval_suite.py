@@ -130,11 +130,12 @@ import argparse
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, default=None, help="Path to trained weights (e.g. checkpoints/sft_full.pt)")
+    parser.add_argument("--dataset", type=str, default="data/eval_rag_subset.json", help="Dataset to evaluate on")
     args = parser.parse_args()
 
     print("Loading datasets...")
     gsm8k_data = load_dataset('data/eval_gsm8k_subset.json')
-    rag_data = load_dataset('data/eval_rag_subset.json')
+    rag_data = load_dataset(args.dataset)
     
     print(f"\n--- PHASE 6.3: EVALUATION SUITE RUNNING ---")
     if args.checkpoint:
@@ -200,7 +201,8 @@ def main():
             
             def mocked_system2(prompt_str, user_query):
                 if gold_doc:
-                    prompt_str = f"System: Retrieved Context: {gold_doc}\n" + prompt_str
+                    search_query = user_query.split()[-1] if user_query else "unknown"
+                    prompt_str = f"User: {user_query}\nAI: [RETRIEVE] {search_query} [/RETRIEVE]\nSystem: Retrieved Context: {gold_doc}\nAI:"
                 return original_system2(prompt_str, user_query)
                 
             brain.system2_reasoning = mocked_system2

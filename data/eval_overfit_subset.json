@@ -1,0 +1,97 @@
+[
+    {
+        "query": "When did Apollo 11 land on the Moon?",
+        "answer": "1969",
+        "expected_keywords": ["1969", "Apollo 11"],
+        "category": "science"
+    },
+    {
+        "query": "What is the capital of France?",
+        "answer": "Paris",
+        "expected_keywords": ["Paris", "France"],
+        "category": "geography"
+    },
+    {
+        "query": "At what temperature does water boil?",
+        "answer": "100 degrees Celsius",
+        "expected_keywords": ["100 degrees Celsius", "water boils"],
+        "category": "science"
+    },
+    {
+        "query": "Who developed the theory of relativity?",
+        "answer": "Albert Einstein",
+        "expected_keywords": ["Albert Einstein", "theory of relativity"],
+        "category": "science"
+    },
+    {
+        "query": "What is the chemical symbol for gold?",
+        "answer": "Au",
+        "expected_keywords": ["Au", "gold"],
+        "category": "science"
+    },
+    {
+        "query": "Which planet is the largest in the Solar System?",
+        "answer": "Jupiter",
+        "expected_keywords": ["Jupiter", "largest"],
+        "category": "astronomy"
+    },
+    {
+        "query": "What is the highest mountain on Earth?",
+        "answer": "Mount Everest",
+        "expected_keywords": ["Mount Everest", "highest"],
+        "category": "geography"
+    },
+    {
+        "query": "Who wrote Romeo and Juliet?",
+        "answer": "William Shakespeare",
+        "expected_keywords": ["William Shakespeare", "Romeo and Juliet"],
+        "category": "history"
+    },
+    {
+        "query": "What is the largest ocean on Earth?",
+        "answer": "The Pacific Ocean",
+        "expected_keywords": ["Pacific Ocean", "largest"],
+        "category": "geography"
+    },
+    {
+        "query": "What process do plants use to make food?",
+        "answer": "Photosynthesis",
+        "expected_keywords": ["Photosynthesis", "plants"],
+        "category": "science"
+    },
+    {
+        "query": "Who discovered the fictional element Vibranium?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "unanswerable"
+    },
+    {
+        "query": "What is the population of the underwater city of Atlantis?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "unanswerable"
+    },
+    {
+        "query": "How many aliens live on Mars?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "unanswerable"
+    },
+    {
+        "query": "Who is the current king of the Sun?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "unanswerable"
+    },
+    {
+        "query": "What is the exact number of grains of sand on Earth?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "unanswerable"
+    }
+]
