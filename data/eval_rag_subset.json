@@ -106,5 +106,27 @@
         "unanswerable": true,
         "category": "unanswerable",
         "context": ""
+    },
+    {
+        "query": "France ki rajdhani kya hai?",
+        "answer": "Paris",
+        "expected_keywords": ["Paris", "rajdhani"],
+        "category": "hinglish",
+        "context": "The capital of France is Paris."
+    },
+    {
+        "query": "Gold ka chemical symbol kya hota hai?",
+        "answer": "Au",
+        "expected_keywords": ["Au"],
+        "category": "hinglish",
+        "context": "The chemical symbol for gold is Au. Its atomic number is 79, making it one of the higher atomic number elements that occur naturally."
+    },
+    {
+        "query": "Vibranium kisne discover kiya?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "hinglish_unanswerable",
+        "context": ""
     }
 ]

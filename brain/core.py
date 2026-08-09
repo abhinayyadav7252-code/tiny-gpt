@@ -141,11 +141,14 @@ class AIBrain:
         print("[System 2] Activated. Generating multiple reasoning paths...")
         num_candidates = 3
         
-        # Determine RAG Early
-        needs_rag = any(kw in user_query.lower() for kw in ["who", "what", "where", "when", "why", "how", "capital", "invent", "president"])
+        # Determine RAG Early (English + Hinglish keywords)
+        factual_keywords = ["who", "what", "where", "when", "why", "how", "capital", "invent", "president", 
+                            "kaun", "kya", "kahan", "kab", "kyon", "kaise", "rajdhani", "kisne"]
+        needs_rag = any(kw in user_query.lower() for kw in factual_keywords)
         
-        # Simple Intent Router for Math Bypass
-        math_keywords = ["add", "subtract", "multiply", "divide", "how many", "how much", "mph", "train", "hour", "baker", "dozen", "earns", "students", "buy", "sell"]
+        # Simple Intent Router for Math Bypass (English + Hinglish keywords)
+        math_keywords = ["add", "subtract", "multiply", "divide", "how many", "how much", "mph", "train", "hour", "baker", "dozen", "earns", "students", "buy", "sell",
+                         "jodo", "ghatao", "guna", "bhag", "kitne", "kitna", "bache", "paas"]
         is_math = user_query and any(kw in user_query.lower() for kw in math_keywords) and any(c.isdigit() for c in user_query)
         if is_math:
             needs_rag = True

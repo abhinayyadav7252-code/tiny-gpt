@@ -109,6 +109,37 @@ def build_mixture():
         completion = f" Let's think step by step. {a}."
         data.append({"prompt": prompt, "completion": completion})
 
+    # 5. Hinglish Data (40 examples)
+    hinglish_factual = [
+        ("France ki rajdhani kya hai?", "rajdhani", "The capital of France is Paris.", " Context ke hisaab se, iska jawab Paris hai."),
+        ("Gold ka chemical symbol kya hota hai?", "hota", "The chemical symbol for gold is Au. Its atomic number is 79, making it one of the higher atomic number elements that occur naturally.", " Context ke hisaab se, iska jawab Au hai."),
+        ("Japan ki rajdhani kya hai?", "rajdhani", "The capital of Japan is Tokyo.", " Context ke hisaab se, iska jawab Tokyo hai."),
+        ("Water kitne temperature par boil hota hai?", "hota", "Water boils at 100 degrees Celsius.", " Context ke hisaab se, iska jawab 100 degrees Celsius hai.")
+    ] * 5 # 20 examples
+    
+    for q, query, ctx, completion in hinglish_factual:
+        prompt = f"User: {q}\nAI: [RETRIEVE] {query} [/RETRIEVE]\nSystem: Retrieved Context: {ctx}\nAI:"
+        data.append({"prompt": prompt, "completion": completion})
+        
+    hinglish_unanswerable = [
+        ("Vibranium kisne discover kiya?", "kiya", "None.", " Mere paas iska jawab dene ke liye evidence nahi hai."),
+        ("Mars par kitne aliens rehte hain?", "hain", "None.", " Mere paas iska jawab dene ke liye evidence nahi hai."),
+        ("Atlantis city ki population kya hai?", "hai", "None.", " Mere paas iska jawab dene ke liye evidence nahi hai.")
+    ] * 4 # 12 examples
+    
+    for q, query, ctx, completion in hinglish_unanswerable:
+        prompt = f"User: {q}\nAI: [RETRIEVE] {query} [/RETRIEVE]\nSystem: Retrieved Context: {ctx}\nAI:"
+        data.append({"prompt": prompt, "completion": completion})
+        
+    hinglish_math = [
+        ("Agar Ram ke paas 5 seb hain aur usne 2 bache ko diye, aur fir 3 kharide, toh uske paas kitne seb bache?", "bache", "None.", " Let's think step by step. 6."),
+        ("Ek baker ne 12 dozen cookies banayi. Usne subah 50 aur dopahar me 34 bech di. Uske paas kitni bachi?", "bachi", "Dogs are popular pets.", " Let's think step by step. 60.")
+    ] * 4 # 8 examples
+    
+    for q, query, ctx, completion in hinglish_math:
+        prompt = f"User: {q}\nAI: [RETRIEVE] {query} [/RETRIEVE]\nSystem: Retrieved Context: {ctx}\nAI:"
+        data.append({"prompt": prompt, "completion": completion})
+
     random.shuffle(data)
     
     output_path = "data/mixed_training_data.jsonl"
