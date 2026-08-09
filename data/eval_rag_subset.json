@@ -2,38 +2,94 @@
     {
         "query": "Who was the first woman to win a Nobel Prize?",
         "answer": "Marie Curie",
-        "expected_keywords": ["Marie Curie", "first woman", "Nobel Prize"]
+        "expected_keywords": ["Marie Curie", "first woman", "Nobel Prize"],
+        "category": "science"
     },
     {
         "query": "In what year did the Apollo 11 moon landing occur?",
         "answer": "1969",
-        "expected_keywords": ["Apollo 11", "1969", "moon landing"]
+        "expected_keywords": ["Apollo 11", "1969", "moon landing"],
+        "category": "history"
     },
     {
         "query": "What is the chemical symbol for gold?",
         "answer": "Au",
-        "expected_keywords": ["chemical symbol", "gold", "Au"]
+        "expected_keywords": ["chemical symbol", "gold", "Au"],
+        "category": "science"
     },
     {
         "query": "What is the largest planet in our solar system?",
         "answer": "Jupiter",
-        "expected_keywords": ["Jupiter", "largest planet", "gas giant"]
+        "expected_keywords": ["Jupiter", "largest planet", "gas giant"],
+        "category": "astronomy"
     },
     {
         "query": "Who developed the theory of relativity?",
         "answer": "Albert Einstein",
-        "expected_keywords": ["Albert Einstein", "theory of relativity"]
+        "expected_keywords": ["Albert Einstein", "theory of relativity"],
+        "category": "science"
+    },
+    {
+        "query": "What is the capital of Australia?",
+        "answer": "Canberra",
+        "expected_keywords": ["capital", "Australia", "Canberra"],
+        "category": "geography"
+    },
+    {
+        "query": "What is the elevation of Mount Everest?",
+        "answer": "8,848.86 meters",
+        "expected_keywords": ["Mount Everest", "elevation", "8,848.86", "Himalayas"],
+        "category": "geography"
+    },
+    {
+        "query": "When was the Declaration of Independence adopted?",
+        "answer": "July 4, 1776",
+        "expected_keywords": ["Declaration of Independence", "July 4, 1776", "Philadelphia"],
+        "category": "history"
+    },
+    {
+        "query": "What is the speed of light in a vacuum in kilometers per second?",
+        "answer": "300,000",
+        "expected_keywords": ["speed of light", "vacuum", "300,000 kilometers"],
+        "category": "science"
+    },
+    {
+        "query": "Which ocean is the largest and deepest on Earth?",
+        "answer": "Pacific Ocean",
+        "expected_keywords": ["largest", "deepest", "Pacific Ocean"],
+        "category": "geography"
+    },
+    {
+        "query": "Who was the first man to walk on the moon, and in what year did he do it?",
+        "answer": "Neil Armstrong in 1969",
+        "expected_keywords": ["Neil Armstrong", "1969", "Apollo 11"],
+        "category": "multi-hop"
+    },
+    {
+        "query": "What planet is known as the Red Planet and which one is the largest?",
+        "answer": "Mars is the Red Planet and Jupiter is the largest.",
+        "expected_keywords": ["Mars", "Red Planet", "Jupiter", "largest planet"],
+        "category": "multi-hop"
     },
     {
         "query": "Who discovered the fictional element Vibranium?",
         "answer": "I don't have enough evidence",
         "expected_keywords": [],
-        "unanswerable": true
+        "unanswerable": true,
+        "category": "unanswerable"
     },
     {
         "query": "What is the population of the underwater city of Atlantis?",
         "answer": "I don't have enough evidence",
         "expected_keywords": [],
-        "unanswerable": true
+        "unanswerable": true,
+        "category": "unanswerable"
+    },
+    {
+        "query": "How many aliens currently live on the planet Mars?",
+        "answer": "I don't have enough evidence",
+        "expected_keywords": [],
+        "unanswerable": true,
+        "category": "unanswerable"
     }
 ]

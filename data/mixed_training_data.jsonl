@@ -1,0 +1,8 @@
+{"text": "User: What is 5 + 7?\nAI: 5 + 7 = 12.\nThe answer is 12.", "source": "sft"}
+{"text": "The quick brown fox jumps over the lazy dog. This is a classic pangram.", "source": "pretrain"}
+{"text": "User: Who developed the theory of relativity?\nAI: [RETRIEVE] theory of relativity [/RETRIEVE]\nSystem: Retrieved Context: Albert Einstein developed the theory of relativity.\nAI: Based on the retrieved context, Albert Einstein developed the theory of relativity.", "source": "sft"}
+{"text": "User: Explain gravity.\nAI: Gravity is a fundamental interaction which causes mutual attraction between all things with mass or energy.", "source": "sft"}
+{"text": "User: What is the largest planet in the solar system?\nAI: [RETRIEVE] largest planet solar system [/RETRIEVE]\nSystem: Retrieved Context: Jupiter is the largest planet in the Solar System.\nAI: Jupiter is the largest planet in our solar system.", "source": "sft"}
+{"text": "User: What is the capital of France?\nAI: The capital of France is Paris.", "source": "sft"}
+{"text": "User: If John has 3 apples and buys 4 more, how many does he have?\nAI: John starts with 3 apples. He buys 4 more. 3 + 4 = 7.\nThe answer is 7.", "source": "sft"}
+{"text": "Python is a high-level, general-purpose programming language. Its design philosophy emphasizes code readability.", "source": "pretrain"}

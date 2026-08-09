@@ -123,12 +123,67 @@ def evaluate_factual(brain, dataset, exp_name):
     
     return acc, hallucination_rate, abstention_rate
 
+def evaluate_oracle_rag(dataset, exp_name):
+    print(f"\nEvaluating {exp_name} (Oracle RAG Factual)...")
+    total = len(dataset)
+    correct = 0
+    hallucinated = 0
+    abstained = 0
+    
+    # We will instantiate a new brain for each query to cleanly inject the exact context
+    from brain.rag_system import WIKI_DOCS
+    
+    for item in dataset:
+        query = item['query']
+        expected = item['answer'].lower()
+        is_unanswerable = item.get('unanswerable', False)
+        expected_keywords = item.get('expected_keywords', [])
+        
+        # Oracle Gold Document Injection
+        gold_doc = ""
+        if not is_unanswerable and expected_keywords:
+            for doc in WIKI_DOCS:
+                if any(kw.lower() in doc.lower() for kw in expected_keywords):
+                    gold_doc = doc
+                    break
+        
+        brain = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
+        # Mock retrieval inside process_query
+        original_system2 = brain.system2_reasoning
+        
+        def mocked_system2(prompt_str, user_query):
+            if gold_doc:
+                prompt_str = f"System: Retrieved Context: {gold_doc}\n" + prompt_str
+            return original_system2(prompt_str, user_query)
+            
+        brain.system2_reasoning = mocked_system2
+        
+        response = brain.process_query(query).lower()
+        
+        if is_unanswerable:
+            if "don't know" in response or "not found" in response or "cannot" in response or "no relevant" in response:
+                abstained += 1
+                correct += 1
+            else:
+                hallucinated += 1
+        else:
+            if expected in response:
+                correct += 1
+            else:
+                hallucinated += 1
+                
+    acc = correct / total * 100
+    hallucination_rate = hallucinated / total * 100
+    abstention_rate = abstained / sum(1 for item in dataset if item.get('unanswerable', False)) * 100 if any(item.get('unanswerable', False) for item in dataset) else 0.0
+    
+    return acc, hallucination_rate, abstention_rate
+
 def main():
     print("Loading datasets...")
     gsm8k_data = load_dataset('data/eval_gsm8k_subset.json')
     rag_data = load_dataset('data/eval_rag_subset.json')
     
-    print("\n--- PHASE 6.1: EVALUATION SUITE RUNNING ---")
+    print("\n--- PHASE 6.2: EVALUATION SUITE RUNNING ---")
     
     # 1. Isolated Retrieval Test
     retrieval_metrics = evaluate_retrieval_isolated(rag_data)
@@ -148,12 +203,16 @@ def main():
     brain_full = AIBrain(use_self_model=True, use_confidence=True, use_verification=True)
     full_fact_acc, full_halluc, full_abstention = evaluate_factual(brain_full, rag_data, "Full Brain")
     
+    # 5. Oracle RAG
+    oracle_fact_acc, oracle_halluc, oracle_abstention = evaluate_oracle_rag(rag_data, "Oracle RAG")
+    
     print("\n================ ABLATION SUMMARY ================")
     print(f"{'Experiment':<20} | {'Math Acc':<10} | {'Fact Acc':<10} | {'Halluc %':<10} | {'Abstention %':<12}")
     print("-" * 75)
     print(f"{'Base Model':<20} | {base_math_acc:>8.1f}% | {base_fact_acc:>8.1f}% | {base_halluc:>8.1f}% | {'N/A':>12}")
     print(f"{'System 2 Only':<20} | {sys2_math_acc:>8.1f}% | {sys2_fact_acc:>8.1f}% | {sys2_halluc:>8.1f}% | {'N/A':>12}")
     print(f"{'Full Brain (RAG)':<20} | {'N/A':>10} | {full_fact_acc:>8.1f}% | {full_halluc:>8.1f}% | {full_abstention:>11.1f}%")
+    print(f"{'Oracle RAG':<20} | {'N/A':>10} | {oracle_fact_acc:>8.1f}% | {oracle_halluc:>8.1f}% | {oracle_abstention:>11.1f}%")
     
     print("\n================ RAG RETRIEVAL (ISOLATED) ================")
     for k, v in retrieval_metrics.items():
