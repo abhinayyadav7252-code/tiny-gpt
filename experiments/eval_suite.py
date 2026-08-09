@@ -55,6 +55,8 @@ def evaluate_math(brain, dataset, exp_name):
                 
         if is_correct:
             correct += 1
+        else:
+            print(f"[{exp_name} Math FAIL] Expected: {expected} | Extracted: {extracted} | Got: {response}")
             
     acc = correct / total * 100
     return acc
