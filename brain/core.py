@@ -34,7 +34,13 @@ class ChaitanyaBrain:
                 
                 self.device = config.device
                 self.model = TinyGPT()
-                self.model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
+                
+                ckpt = torch.load(checkpoint_path, map_location=self.device)
+                if 'model_state' in ckpt:
+                    self.model.load_state_dict(ckpt['model_state'])
+                else:
+                    self.model.load_state_dict(ckpt)
+                    
                 self.model.eval()
                 self.model.to(self.device)
                 self.encode = encode
