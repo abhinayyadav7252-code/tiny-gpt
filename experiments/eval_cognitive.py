@@ -22,6 +22,16 @@ def run_cognitive_benchmark():
     
     # 1. Initialize Brain
     print("Initializing ChaitanyaBrain...")
+    # Configure for 25M model architecture
+    import config
+    config.ACTIVE_SCALE = "25M"
+    cfg = config.SCALES["25M"]
+    config.embed_dim = cfg["embed_dim"]
+    config.num_heads = cfg["num_heads"]
+    config.num_layers = cfg["num_layers"]
+    config.use_moe = cfg["use_moe"]
+    config.num_experts = cfg["num_experts"]
+    
     # Change load_model to True to test with real LLM weights
     brain = ChaitanyaBrain(load_model=True, checkpoint_path="checkpoints/pretrain.pt")
     
