@@ -1,0 +1,20 @@
+=== Tokenizer Audit (GPT-2 BPE) ===
+
+[English]
+Text: The computer is thinking.
+Tokens (5): ['The', ' computer', ' is', ' thinking', '.']
+Tokens/Char: 0.20
+Tokens/Word: 1.25
+----------------------------------------
+[Hinglish]
+Text: AI ko ye sawaal kaise solve karna hai?
+Tokens (14): ['AI', ' ko', ' ye', ' saw', 'a', 'al', ' ka', 'ise', ' solve', ' k', 'arna', ' ha', 'i', '?']
+Tokens/Char: 0.37
+Tokens/Word: 1.75
+----------------------------------------
+[Hindi]
+Text: यह सवाल कैसे हल करना है?
+Tokens (35): ['�', '�', '�', '�', ' �', '�', '�', '�', 'ा', '�', '�', ' �', '�', '�', '�', '�', '�', '�', '�', ' �', '�', '�', '�', ' �', '�', '�', '�', '�', '�', 'ा', ' �', '�', '�', '�', '?']
+Tokens/Char: 1.46
+Tokens/Word: 5.83
+----------------------------------------

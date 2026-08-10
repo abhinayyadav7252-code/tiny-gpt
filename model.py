@@ -157,7 +157,10 @@ class TinyGPT(nn.Module):
         
         self.blocks = nn.Sequential(*[Block(config.embed_dim, n_head=config.num_heads) for _ in range(config.num_layers)])
         self.ln_f = nn.LayerNorm(config.embed_dim)
-        self.lm_head = nn.Linear(config.embed_dim, vocab_size)
+        self.lm_head = nn.Linear(config.embed_dim, vocab_size, bias=False)
+        
+        # Tie token embeddings and LM head to save parameters
+        self.lm_head.weight = self.token_embedding_table.weight
 
     def forward(self, idx, targets=None, past_key_values=None):
         B, T = idx.shape
@@ -263,10 +266,67 @@ class TinyGPT(nn.Module):
         mean_log_probs = (log_probs / lengths.clamp(min=1)).tolist()
         return idx, mean_log_probs
 
+def print_parameter_stats(model):
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    # Break down by component
+    emb_params = sum(p.numel() for p in model.token_embedding_table.parameters()) + sum(p.numel() for p in model.position_embedding_table.parameters())
+    
+    attn_params = 0
+    expert_params = 0
+    router_params = 0
+    dense_mlp_params = 0
+    
+    for block in model.blocks:
+        attn_params += sum(p.numel() for p in block.sa.parameters())
+        if config.use_moe:
+            router_params += sum(p.numel() for p in block.ffwd.router.parameters())
+            expert_params += sum(p.numel() for p in block.ffwd.experts.parameters())
+        else:
+            dense_mlp_params += sum(p.numel() for p in block.ffwd.parameters())
+            
+    lm_head_params = sum(p.numel() for p in model.lm_head.parameters())
+    
+    # Are embeddings tied?
+    is_tied = (model.token_embedding_table.weight.data_ptr() == model.lm_head.weight.data_ptr())
+    
+    # Calculate active parameters per token
+    active_params = emb_params + attn_params
+    if config.use_moe:
+        # Only top_k_experts are active per token per layer
+        params_per_expert = expert_params // (config.num_experts * config.num_layers)
+        active_params += router_params + (params_per_expert * config.top_k_experts * config.num_layers)
+    else:
+        active_params += dense_mlp_params
+        
+    active_params += lm_head_params
+    if is_tied:
+        active_params -= lm_head_params
+
+    print(f"{'='*40}")
+    print(f"Model Configuration: {config.ACTIVE_SCALE}")
+    print(f"{'='*40}")
+    print(f"Total parameters:      {total_params:,}")
+    print(f"Trainable parameters:  {trainable_params:,}")
+    print(f"Active params/token:   {active_params:,}")
+    print(f"Embeddings Tied:       {is_tied}")
+    print(f"{'-'*40}")
+    print(f"Embeddings:            {emb_params:,}")
+    print(f"Attention:             {attn_params:,}")
+    if config.use_moe:
+        print(f"Experts (MoE):         {expert_params:,}")
+        print(f"Router (MoE):          {router_params:,}")
+    else:
+        print(f"Dense MLP:             {dense_mlp_params:,}")
+    print(f"LM Head:               {lm_head_params:,}")
+    print(f"{'='*40}\n")
+
 if __name__ == '__main__':
     from dataset import get_batch
-    print("--- Test 3: Model Shape Verification ---")
+    print("--- Test 3: Model Shape & Parameter Verification ---")
     model = TinyGPT().to(config.device)
+    print_parameter_stats(model)
     xb, yb = get_batch()
     logits, loss, _ = model(xb, yb)
     

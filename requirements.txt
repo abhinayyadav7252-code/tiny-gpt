@@ -4,3 +4,4 @@ tqdm
 scikit-learn
 faiss-cpu
 sentence-transformers
+datasets
