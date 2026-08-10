@@ -48,7 +48,7 @@ def generate_text(model, device, prompt, max_new_tokens=50):
         for _ in range(max_new_tokens):
             # Crop to context length
             idx_cond = idx[:, -config.context_length:]
-            logits, _ = model(idx_cond)
+            logits, _, _ = model(idx_cond)
             # Take the logits for the last step
             logits = logits[:, -1, :]
             # Apply greedy decoding (argmax) for deterministic evaluation
