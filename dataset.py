@@ -1,18 +1,37 @@
 import torch
 import config
 import os
+from tokenizers import Tokenizer
 import tiktoken
 
-# Initialize BPE tokenizer (GPT-2 standard)
-enc = tiktoken.get_encoding("gpt2")
-vocab_size = enc.n_vocab
-eos_token_id = 50256
+custom_tokenizer_path = os.path.join(os.path.dirname(__file__), 'checkpoints', 'chaitanya_bpe.json')
 
-def encode(s):
-    return enc.encode(s, allowed_special="all")
+if os.path.exists(custom_tokenizer_path):
+    print("Loading Custom Chaitanya Tokenizer...")
+    enc = Tokenizer.from_file(custom_tokenizer_path)
+    vocab_size = enc.get_vocab_size()
+    
+    # Safely get EOS token ID or fallback
+    eos_token_id = enc.token_to_id("[EOS]")
+    if eos_token_id is None:
+        eos_token_id = enc.token_to_id("<|endoftext|>") or 0
+        
+    def encode(s):
+        return enc.encode(s).ids
 
-def decode(l):
-    return enc.decode(l)
+    def decode(l):
+        return enc.decode(l)
+else:
+    print("Warning: Custom tokenizer not found. Falling back to GPT-2 BPE.")
+    enc = tiktoken.get_encoding("gpt2")
+    vocab_size = enc.n_vocab
+    eos_token_id = 50256
+
+    def encode(s):
+        return enc.encode(s, allowed_special="all")
+
+    def decode(l):
+        return enc.decode(l)
 
 # Default data path for Phase 5
 data_path = os.path.join(os.path.dirname(__file__), 'data', 'general_text.txt')
