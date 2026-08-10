@@ -4,14 +4,15 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 def fetch_hinglish(output_path, num_samples=100000):
-    print("Fetching Hinglish Data (L3Cube-Pune Hinglish Tweets)...")
-    dataset = load_dataset("l3cube-pune/hinglish-tweet", split="train")
+    print("Fetching Hinglish Data (Abhishekcr448/Hinglish-Everyday-Conversations-1M)...")
+    dataset = load_dataset("Abhishekcr448/Hinglish-Everyday-Conversations-1M", split="train")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         count = 0
         for item in tqdm(dataset, total=min(num_samples, len(dataset))):
-            text = item.get("tweet", "").strip()
+            # Combine all string values in the row in case schema varies
+            text = " ".join([str(v) for v in item.values() if v is not None]).strip()
             if text:
                 f.write(text + "\n<|endoftext|>\n")
                 count += 1
