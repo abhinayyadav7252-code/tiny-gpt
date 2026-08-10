@@ -88,7 +88,7 @@ def main():
         tokens_seen = checkpoint.get('tokens_seen', 0)
         
         if 'torch_rng_state' in checkpoint:
-            torch.set_rng_state(checkpoint['torch_rng_state'])
+            torch.set_rng_state(checkpoint['torch_rng_state'].cpu())
         if 'numpy_rng_state' in checkpoint:
             np.random.set_state(checkpoint['numpy_rng_state'])
         if 'random_rng_state' in checkpoint:
