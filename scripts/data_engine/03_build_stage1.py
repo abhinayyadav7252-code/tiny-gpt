@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from dataset import encode
 
 def build_stage1(english_path, hindi_path, output_bin_path):
