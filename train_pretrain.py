@@ -83,11 +83,8 @@ def main():
             
         xb, yb = get_batch(train_data, config.batch_size, config.context_length, config.device)
         
-        logits, loss, aux_loss = model(xb, yb)
+        logits, loss, _ = model(xb, yb)
         
-        if config.use_moe:
-            loss = loss + config.moe_loss_coef * aux_loss
-            
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
