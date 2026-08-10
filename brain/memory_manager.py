@@ -41,7 +41,7 @@ class MemoryManager:
             
     def search_all(self, query: str):
         """Retrieves relevant context from all memory layers."""
-        ep_results = self.episodic.search(query, top_k=2)
+        ep_results = self.episodic.search(query, top_k=5)
         sem_results = self.semantic.search(query, top_k=3)
         proc_results = self.procedural.search_skills(query, top_k=1)
         
