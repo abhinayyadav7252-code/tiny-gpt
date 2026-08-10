@@ -42,7 +42,8 @@ def cleanup_old_checkpoints(save_dir, keep_last=3):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scale", type=str, choices=list(config.SCALES.keys()), default="10M")
-    parser.add_argument("--data_dir", type=str, default="data")
+    parser.add_argument("--train_data", type=str, default="data/train.bin")
+    parser.add_argument("--val_data", type=str, default="data/val.bin")
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=3e-4)
     parser.add_argument("--save_dir", type=str, default="checkpoints")
@@ -63,12 +64,15 @@ def main():
     
     # Load dataset
     print("Loading binary dataset...")
-    train_path = os.path.join(args.data_dir, "train.bin")
-    val_path = os.path.join(args.data_dir, "val.bin")
     
     # memory map for speed
-    train_data = np.memmap(train_path, dtype=np.uint16, mode='r')
-    val_data = np.memmap(val_path, dtype=np.uint16, mode='r')
+    train_data = np.memmap(args.train_data, dtype=np.uint16, mode='r')
+    
+    if os.path.exists(args.val_data):
+        val_data = np.memmap(args.val_data, dtype=np.uint16, mode='r')
+    else:
+        print(f"Validation data {args.val_data} not found. Using train data for validation estimates.")
+        val_data = train_data
     print(f"Loaded {len(train_data):,} training tokens")
     
     # Initialize model
