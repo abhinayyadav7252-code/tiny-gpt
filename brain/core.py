@@ -35,7 +35,7 @@ class ChaitanyaBrain:
                 self.device = config.device
                 self.model = TinyGPT()
                 
-                ckpt = torch.load(checkpoint_path, map_location=self.device)
+                ckpt = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
                 if 'model_state' in ckpt:
                     self.model.load_state_dict(ckpt['model_state'])
                 else:

@@ -80,7 +80,7 @@ def main():
     
     if args.resume:
         print(f"Resuming from checkpoint: {args.resume}")
-        checkpoint = torch.load(args.resume, map_location=config.device)
+        checkpoint = torch.load(args.resume, map_location=config.device, weights_only=False)
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         
