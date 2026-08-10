@@ -22,7 +22,8 @@ def run_cognitive_benchmark():
     
     # 1. Initialize Brain
     print("Initializing ChaitanyaBrain...")
-    brain = ChaitanyaBrain(load_model=False) # Running in Mock Mode for Architecture Test
+    # Change load_model to True to test with real LLM weights
+    brain = ChaitanyaBrain(load_model=True, checkpoint_path="checkpoints/pretrain.pt")
     
     # ----------------------------------------------------
     # TEST 1: Semantic Memory Pipeline
