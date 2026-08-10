@@ -1,10 +1,13 @@
+import os
+import sys
+import argparse
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import torch
 import config
 from model import TinyGPT
 from dataset import encode, decode
-import argparse
-import sys
-import os
 
 PROMPTS = [
     {"domain": "English", "prompt": "Once upon a time in a small village, there lived a"},
