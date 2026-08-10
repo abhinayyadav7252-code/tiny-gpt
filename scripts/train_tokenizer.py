@@ -37,16 +37,36 @@ def train_custom_tokenizer(data_dir: str, vocab_size: int, output_path: str):
         show_progress=True
     )
     
-    # Find all text data files to train on (e.g. from data/ folder)
-    # We will assume user provides a .txt or .jsonl containing the corpus
-    files = glob.glob(os.path.join(data_dir, "*.txt")) + glob.glob(os.path.join(data_dir, "*.jsonl"))
-    
+    # We will build an iterator that extracts text from txt and json/jsonl cleanly
+    files = glob.glob(os.path.join(data_dir, "*.txt")) + \
+            glob.glob(os.path.join(data_dir, "*.jsonl")) + \
+            glob.glob(os.path.join(data_dir, "*.json"))
+            
     if not files:
-        print(f"No .txt or .jsonl files found in {data_dir}. Please provide a corpus.")
+        print(f"No .txt, .json, or .jsonl files found in {data_dir}. Please provide a corpus.")
         return
         
-    print(f"Training on files: {files}")
-    tokenizer.train(files, trainer)
+    print(f"Found {len(files)} files. Extracting raw text for tokenizer training...")
+    
+    def get_training_corpus():
+        import json
+        for file_path in files:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                if file_path.endswith('.txt'):
+                    for line in f:
+                        if line.strip(): yield line.strip()
+                else: # json or jsonl
+                    for line in f:
+                        if not line.strip(): continue
+                        try:
+                            data = json.loads(line)
+                            # Try to extract the common text fields we use
+                            text = data.get("text") or data.get("instruction") or data.get("content") or ""
+                            if text: yield text
+                        except:
+                            pass # skip invalid json lines
+
+    tokenizer.train_from_iterator(get_training_corpus(), trainer)
     
     # Save the tokenizer
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
