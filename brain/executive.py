@@ -7,10 +7,15 @@ class ExecutiveController:
     The main decision maker. Instead of hardcoded giant if/else blocks, it assesses 
     the state of the WorkingMemory and decides the next cognitive action based on a policy (currently rules-based).
     """
-    def __init__(self, memory_manager):
+    def __init__(self, memory_manager, model=None, encode_fn=None, decode_fn=None, device='cpu'):
         self.wm = WorkingMemory()
         self.memory_manager = memory_manager
         self.logger = logging.getLogger("ChaitanyaEventBus")
+        
+        self.model = model
+        self.encode = encode_fn
+        self.decode = decode_fn
+        self.device = device
         
         bus.subscribe(EventType.USER_INPUT, self.handle_user_input)
         
@@ -70,8 +75,28 @@ class ExecutiveController:
         self.tick()
         
     def _generate_final_answer(self):
-        # In the future, this calls the underlying `TinyGPT` with the `wm.to_prompt_context()`
-        final_answer = "This is a drafted response based on Working Memory."
+        prompt = self.wm.state.to_prompt_context()
+        
+        if self.model and self.encode and self.decode:
+            import torch
+            try:
+                # We limit context length to avoid breaking 1.5M model context window
+                context_idx = self.encode(prompt)
+                if len(context_idx) > 200:
+                    context_idx = context_idx[-200:]
+                
+                context_tensor = torch.tensor(context_idx, dtype=torch.long, device=self.device).unsqueeze(0)
+                out_idx = self.model.generate(context_tensor, max_new_tokens=50)[0].tolist()
+                
+                # Extract only the generated part
+                final_answer = self.decode(out_idx[len(context_idx):]).strip()
+                if not final_answer: final_answer = "[Empty Model Output]"
+            except Exception as e:
+                self.logger.error(f"Model generation failed: {e}")
+                final_answer = "Generation Failed."
+        else:
+            final_answer = "This is a drafted response based on Working Memory. (Model Mocked)"
+            
         self.wm.set_confidence(0.85)
         bus.publish(EventType.ANSWER_GENERATED, {"answer": final_answer, "confidence": self.wm.state.confidence})
         

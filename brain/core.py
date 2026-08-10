@@ -14,14 +14,44 @@ class ChaitanyaBrain:
     The Cognitive Core initialized for Chaitanya v2.
     It wires together the EventBus and the cognitive subsystems.
     """
-    def __init__(self):
+    def __init__(self, load_model=False, checkpoint_path='checkpoints/tiny_gpt_real.pt'):
         # Configure logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("ChaitanyaBrain")
         
+        # Optionally load Neural Engine
+        self.model = None
+        self.encode = None
+        self.decode = None
+        self.device = 'cpu'
+        
+        if load_model:
+            try:
+                import torch
+                import config
+                from model import TinyGPT
+                from dataset import encode, decode
+                
+                self.device = config.device
+                self.model = TinyGPT()
+                self.model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
+                self.model.eval()
+                self.model.to(self.device)
+                self.encode = encode
+                self.decode = decode
+                self.logger.info(f"Loaded Neural Engine from {checkpoint_path}")
+            except Exception as e:
+                self.logger.warning(f"Could not load Neural Engine: {e}. Running in Mock Mode.")
+        
         # 1. Initialize Subsystems
         self.memory_manager = MemoryManager()
-        self.executive = ExecutiveController(self.memory_manager)
+        self.executive = ExecutiveController(
+            self.memory_manager, 
+            model=self.model, 
+            encode_fn=self.encode, 
+            decode_fn=self.decode, 
+            device=self.device
+        )
         self.self_model = SelfModel2()
         self.world_model = WorldModel()
         self.learning_loop = LearningLoop()

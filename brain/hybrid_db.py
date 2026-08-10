@@ -105,10 +105,17 @@ class HybridDB:
             cursor.execute(f"SELECT id, content, metadata FROM {self.table_name} WHERE id = ?", (int(idx),))
             row = cursor.fetchone()
             if row:
+                metadata = json.loads(row['metadata'])
+                status = metadata.get('status', 'candidate')
+                
+                # Safeguard: Do not retrieve contradicted or deprecated memories
+                if status in ['contradicted', 'deprecated']:
+                    continue
+                    
                 results.append({
                     "id": row['id'],
                     "content": row['content'],
-                    "metadata": json.loads(row['metadata']),
+                    "metadata": metadata,
                     "distance": float(dist)
                 })
         return results
