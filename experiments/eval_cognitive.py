@@ -20,6 +20,11 @@ def run_cognitive_benchmark():
         "model_accuracy": "N/A (Requires human-in-loop eval for model outputs)"
     }
     
+    # 0. Clean slate for deterministic benchmark
+    if os.path.exists("memory.db"):
+        print("Clearing previous memory.db for deterministic run...")
+        os.remove("memory.db")
+        
     # 1. Initialize Brain
     print("Initializing ChaitanyaBrain...")
     # Configure for 25M model architecture
