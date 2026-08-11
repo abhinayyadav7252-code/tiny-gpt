@@ -22,7 +22,7 @@ def fetch_hinglish(output_path, num_samples=100000):
 
 def fetch_math(output_path, num_samples=8000):
     print("Fetching Math Data (GSM8K)...")
-    dataset = load_dataset("gsm8k", "main", split="train")
+    dataset = load_dataset("openai/gsm8k", "main", split="train")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
@@ -41,7 +41,7 @@ def fetch_math(output_path, num_samples=8000):
 
 def fetch_code(output_path, num_samples=1000):
     print("Fetching Code Data (MBPP)...")
-    dataset = load_dataset("mbpp", split="train")
+    dataset = load_dataset("google-research-datasets/mbpp", "full", split="train")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
@@ -60,7 +60,7 @@ def fetch_code(output_path, num_samples=1000):
 
 def fetch_facts(output_path, num_samples=50000):
     print("Fetching Factual Data (Wikitext-2)...")
-    dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+    dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
